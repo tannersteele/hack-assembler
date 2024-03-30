@@ -1,0 +1,59 @@
+# Compiled object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Compiled dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled static libraries
+*.a
+
+# Executables
+*.exe
+*.out
+
+# CMake build directory
+CMakeFiles/
+CMakeCache.txt
+CMakeScripts/
+Testing/
+
+# CMake per-user files
+CMakeLists.txt.user
+CMakeLists.txt.user.cache
+
+# Visual Studio Code & Visual Studio specific files
+.vscode/
+.vs/
+
+# macOS specific files
+.DS_Store
+
+# Windows thumbnail cache files
+Thumbs.db
+ehthumbs.db
+
+# Visual Studio files
+*.sdf
+*.opensdf
+*.suo
+*.user
+*.vcproj
+*.vcxproj
+*.vcxproj.filters
+*.pdb
+*.ilk
+*.aps
+*.ipch
+*.ncb
+*.sln.docstates
+
+# Clion specific files
+.idea/
+
+# Custom out folder
+out/
