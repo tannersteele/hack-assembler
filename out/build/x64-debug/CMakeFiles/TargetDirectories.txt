@@ -1,0 +1,5 @@
+C:/Users/tanne/source/repos/HackAssembler/out/build/x64-debug/CMakeFiles/edit_cache.dir
+C:/Users/tanne/source/repos/HackAssembler/out/build/x64-debug/CMakeFiles/rebuild_cache.dir
+C:/Users/tanne/source/repos/HackAssembler/out/build/x64-debug/HackAssembler/CMakeFiles/HackAssembler.dir
+C:/Users/tanne/source/repos/HackAssembler/out/build/x64-debug/HackAssembler/CMakeFiles/edit_cache.dir
+C:/Users/tanne/source/repos/HackAssembler/out/build/x64-debug/HackAssembler/CMakeFiles/rebuild_cache.dir
