@@ -2,11 +2,10 @@
 //
 
 #include "HackAssembler.h"
-
-using namespace std;
+#include "Parser.h"
 
 int main()
 {
-	cout << "Hack Assembler entrypoint" << endl;
+	std::cout << "Instruction: " << getInstructionSymbol("@19") << std::endl;
 	return 0;
 }
