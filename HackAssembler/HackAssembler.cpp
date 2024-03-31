@@ -6,6 +6,10 @@
 
 int main()
 {
-	std::cout << "Instruction: " << getInstructionSymbol("@19") << std::endl;
+	// Don't modify original instruction, copy
+	std::string instruction = "@19";
+	std::cout << "Instruction: " << getInstructionSymbol(instruction) << std::endl;
+	std::cout << "Original instruction: " << instruction << std::endl;
+
 	return 0;
 }

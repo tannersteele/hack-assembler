@@ -7,7 +7,7 @@
 	TODO: Make this a state-encapsulated class
 */
 
-InstructionType getInstructionType(std::string instruction)
+InstructionType getInstructionType(const std::string& instruction)
 {
 	//if (containsSubstring(instruction, "@"))
 	//{
@@ -31,7 +31,7 @@ std::string getInstructionSymbol(std::string instruction)
 	return instruction;
 }
 
-std::string getInstructionDestination(std::string instruction)
+std::string getInstructionDestination(const std::string& instruction)
 {
 	//STUB
 	return instruction;
