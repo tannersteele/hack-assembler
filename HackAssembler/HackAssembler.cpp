@@ -7,9 +7,14 @@
 int main()
 {
 	// Don't modify original instruction, copy
-	std::string instruction = "(xxx)";
-	std::cout << "Instruction: " << getInstructionSymbol(instruction) << std::endl;
-	std::cout << "Original instruction: " << instruction << std::endl;
+	std::string LInstruction = "(xxx)";
+	std::cout << "Instruction: " << getInstructionSymbol(LInstruction) << std::endl;
+	std::cout << "Original instruction: " << LInstruction << std::endl;
+
+	std::string CInstruction = "D=D+1"; //C-instruction
+	std::cout << "Instruction Dest: " << getInstructionDestination(CInstruction) << std::endl;
+	std::cout << "Instruction Comp: " << getInstructionComp(CInstruction) << std::endl;
+	std::cout << "Original instruction: " << CInstruction << std::endl;
 
 	return 0;
 }

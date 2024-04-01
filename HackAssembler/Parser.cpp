@@ -17,11 +17,12 @@ InstructionType getInstructionType(const std::string& instruction)
 	else if (containsSubstring(instruction, "("))
 		return InstructionType::L_INSTRUCTION;
 
-	return InstructionType::NONE;
+	// Just default as a C-instruction for now
+	return InstructionType::C_INSTRUCTION;
 }
 
 // Only for A_INSTRUCTION or L_INSTRUCTION
-std::string getInstructionSymbol(std::string instruction)
+std::string getInstructionSymbol(std::string instruction) // copied for now since it's being modified
 {
 	InstructionType type = getInstructionType(instruction);
 
@@ -43,10 +44,26 @@ std::string getInstructionSymbol(std::string instruction)
 	return instruction;
 }
 
-std::string getInstructionDestination(const std::string& instruction)
+// Dest is what's left to the equal sign in a full C-instruction
+std::string getInstructionDestination(std::string instruction)
 {
-	//STUB
-	return instruction;
+	InstructionType type = getInstructionType(instruction);
+
+	assert(type == InstructionType::C_INSTRUCTION, "Invalid instruction type. Must be a `C` instruction.");
+
+	size_t pos = instruction.find('=');
+	return pos != std::string::npos ? instruction.substr(0, pos) : instruction;
+}
+
+// Comp is after the equal sign but before the semicolon in a full C-instruction - could be combined with above logic to compute them all at once
+std::string getInstructionComp(std::string instruction)
+{
+	InstructionType type = getInstructionType(instruction);
+
+	assert(type == InstructionType::C_INSTRUCTION, "Invalid instruction type. Must be a `C` instruction.");
+
+	size_t pos = instruction.find('=');
+	return pos != std::string::npos ? instruction.substr(pos + 1) : instruction; //TODO: semicolon case
 }
 
 bool containsSubstring(const std::string& str, const std::string& substr)
