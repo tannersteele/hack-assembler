@@ -7,7 +7,7 @@
 int main()
 {
 	// Don't modify original instruction, copy
-	std::string instruction = "@19";
+	std::string instruction = "(xxx)";
 	std::cout << "Instruction: " << getInstructionSymbol(instruction) << std::endl;
 	std::cout << "Original instruction: " << instruction << std::endl;
 
