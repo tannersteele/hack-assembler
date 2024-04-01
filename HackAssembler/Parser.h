@@ -18,4 +18,6 @@ std::string getInstructionDestination(std::string instruction);
 
 std::string getInstructionComp(std::string instruction);
 
+std::string getInstructionJump(std::string instruction);
+
 bool containsSubstring(const std::string& str, const std::string& substr);

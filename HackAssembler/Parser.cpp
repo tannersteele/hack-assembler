@@ -63,7 +63,18 @@ std::string getInstructionComp(std::string instruction)
 	assert(type == InstructionType::C_INSTRUCTION, "Invalid instruction type. Must be a `C` instruction.");
 
 	size_t pos = instruction.find('=');
-	return pos != std::string::npos ? instruction.substr(pos + 1) : instruction; //TODO: semicolon case
+	return pos != std::string::npos ? instruction.substr(pos + 1, instruction.find(';') - 2) : instruction;
+}
+
+// Copy pasta'd from the ones above, will clean it up later!
+std::string getInstructionJump(std::string instruction)
+{
+	InstructionType type = getInstructionType(instruction);
+
+	assert(type == InstructionType::C_INSTRUCTION, "Invalid instruction type. Must be a `C` instruction.");
+
+	size_t pos = instruction.find(';');
+	return pos != std::string::npos ? instruction.substr(pos + 1) : instruction;
 }
 
 bool containsSubstring(const std::string& str, const std::string& substr)
