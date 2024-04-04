@@ -35,12 +35,11 @@ std::string getInstructionSymbol(std::string instruction) // copied for now sinc
 		instruction.erase(std::remove(instruction.begin(), instruction.end(), '@'), instruction.end());
 		return instruction;
 	}
-	else if (type == InstructionType::L_INSTRUCTION) // Hacky, formalize with some switch->case logic
-	{
-		instruction.erase(std::remove_if(instruction.begin(), instruction.end(),
-			[](char c) { return c == '(' || c == ')'; }), instruction.end()
-		);
-	}
+
+	instruction.erase(std::remove_if(instruction.begin(), instruction.end(),
+		[](char c) { return c == '(' || c == ')'; }), instruction.end()
+	);
+
 	return instruction;
 }
 
