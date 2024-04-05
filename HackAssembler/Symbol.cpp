@@ -1,6 +1,8 @@
+/*
 #include <unordered_map>
 #include <string>
 #include <iostream>
+#include <bitset>
 
 std::unordered_map<std::string, std::string> jumpSymbolInstructionMapping;
 std::unordered_map<std::string, std::string> destSymbolInstructionMapping;
@@ -16,12 +18,39 @@ std::unordered_map<std::string, std::string> compA1SymbolInstructionMapping;
 		comp("A+1") => 0110111
 		comp("M+1") => 1110111
 		jump("JNE") =>     101
-*/
+struct CInstruction
+{
+	std::string dest;
+	std::string comp;
+	std::string jump;
+
+	CInstruction(std::string dest, std::string comp, std::string jump)
+		: dest(dest), comp(comp), jump(jump) 
+	{
+	}
+};
+
+const int A_INSTRUCTION_SIZE = 15;
 
 //TODO: force uppercase everything we're reading in
 // We know if we're processing a jump || dest || comp already from the parser
-void main()
+void test()
 {
+	std::string commands[5] = {
+		"@15",
+		"M=A",
+		"D=M",
+		"@0",
+		"D;JGE"
+	};
+
+	CInstruction c = CInstruction("D", "M+1", "null");
+
+
+	auto binaryRepr = std::bitset<A_INSTRUCTION_SIZE>(16); // 15 byte padding on all conversions
+
+	std::cout << binaryRepr << std::endl;
+
 	// Could std::bitset<3> a number we're incrementing, but it's cleaner from a reference point to do it this way
 	jumpSymbolInstructionMapping = {
 		{"null", "000"}, // No jump
@@ -34,7 +63,7 @@ void main()
 		{"JMP",  "111"}  // unconditional jump
 	};
 
-	std::cout << "jump symbol test (JNE): " << jumpSymbolInstructionMapping["JNE"] << std::endl;
+	std::string jumpInstruction = jumpSymbolInstructionMapping[c.jump];
 
 	// Effect: store 'comp' from ALU output in...
 	destSymbolInstructionMapping = {
@@ -48,7 +77,7 @@ void main()
 		{"ADM",  "111"}  // A register, D register, and RAM[A]
 	};
 
-	std::cout << "dest symbol test (DM): " << destSymbolInstructionMapping["DM"] << std::endl;
+	std::string destInstruction = destSymbolInstructionMapping[c.dest];
 
 	// Must use Hack ASM version of consts (using A-register trick) for any number != 0, 1, or -1
 	compA0SymbolInstructionMapping = {
@@ -87,16 +116,11 @@ void main()
 		{"D|M", "010101"}
 	};
 
-	const char* compAInstruction = "A+1";
-	const char* compMInstruction = "M+1";
 
-	if (compA0SymbolInstructionMapping.contains(compAInstruction))
-	{
-		std::cout << "dest comp test (A+1): 0" << compA0SymbolInstructionMapping[compAInstruction] << std::endl;
-	}
+	std::string compInstruction = compA0SymbolInstructionMapping.contains(c.comp)
+		? std::string("0" + compA0SymbolInstructionMapping[c.comp])
+		: std::string("1" + compA1SymbolInstructionMapping[c.comp]);
 
-	if (compA1SymbolInstructionMapping.contains(compMInstruction))
-	{
-		std::cout << "dest comp test (M+1): 1" << compA1SymbolInstructionMapping[compMInstruction] << std::endl;
-	}
+	std::cout << "111" << compInstruction << destInstruction << jumpInstruction << std::endl;
 }
+*/
