@@ -4,7 +4,7 @@
 #include "HackAssembler.h"
 #include "Parser.h"
 
-int main()
+int _main()
 {
 	// Don't modify original instruction, copy
 	std::string LInstruction = "(xxx)";

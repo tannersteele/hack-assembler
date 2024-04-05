@@ -1,5 +1,6 @@
 #include <unordered_map>
 #include <string>
+#include <iostream>
 
 std::unordered_map<std::string, std::string> jumpSymbolInstructionMapping;
 std::unordered_map<std::string, std::string> destSymbolInstructionMapping;
@@ -18,7 +19,8 @@ std::unordered_map<std::string, std::string> compA1SymbolInstructionMapping;
 */
 
 //TODO: force uppercase everything we're reading in
-void populateInstructionMappingTables()
+// We know if we're processing a jump || dest || comp already from the parser
+void main()
 {
 	// Could std::bitset<3> a number we're incrementing, but it's cleaner from a reference point to do it this way
 	jumpSymbolInstructionMapping = {
@@ -32,6 +34,8 @@ void populateInstructionMappingTables()
 		{"JMP",  "111"}  // unconditional jump
 	};
 
+	std::cout << "jump symbol test (JNE): " << jumpSymbolInstructionMapping["JNE"] << std::endl;
+
 	// Effect: store 'comp' from ALU output in...
 	destSymbolInstructionMapping = {
 		{"null", "000"}, // Value not stored
@@ -43,6 +47,8 @@ void populateInstructionMappingTables()
 		{"AD",   "110"}, // A register and D register
 		{"ADM",  "111"}  // A register, D register, and RAM[A]
 	};
+
+	std::cout << "dest symbol test (DM): " << destSymbolInstructionMapping["DM"] << std::endl;
 
 	// Must use Hack ASM version of consts (using A-register trick) for any number != 0, 1, or -1
 	compA0SymbolInstructionMapping = {
@@ -80,4 +86,17 @@ void populateInstructionMappingTables()
 		{"D&M", "000000"},
 		{"D|M", "010101"}
 	};
+
+	const char* compAInstruction = "A+1";
+	const char* compMInstruction = "M+1";
+
+	if (compA0SymbolInstructionMapping.contains(compAInstruction))
+	{
+		std::cout << "dest comp test (A+1): 0" << compA0SymbolInstructionMapping[compAInstruction] << std::endl;
+	}
+
+	if (compA1SymbolInstructionMapping.contains(compMInstruction))
+	{
+		std::cout << "dest comp test (M+1): 1" << compA1SymbolInstructionMapping[compMInstruction] << std::endl;
+	}
 }
