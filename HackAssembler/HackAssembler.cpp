@@ -6,7 +6,6 @@
 #include <vector>
 #include <bitset>
 #include <fstream>
-#include <array>
 
 const int A_INSTRUCTION_SIZE = 15; // A instructions must be 15 bits wide
 const int USER_VAR_SPACE_BEGINNING = 16;
