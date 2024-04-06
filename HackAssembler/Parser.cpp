@@ -9,16 +9,37 @@
 /*
 	TODO: Make this a state-encapsulated class
 */
-
 std::unordered_map<std::string, int> symbolTable
 {
 	{ "R0",     0 },
 	{ "R1",     1 },
 	{ "R2",     2 },
 	{ "R3",     3 },
+	{ "R4",     4 },
+	{ "R5",     5 },
+	{ "R6",     6 },
+	{ "R7",     7 },
+	{ "R8",     8 },
+	{ "R9",     9 },
+	{ "R10",    10 },
+	{ "R11",    11 },
+	{ "R12",    12 },
+	{ "R13",    13 },
+	{ "R14",    14 },
+	{ "R15",    15 },
+	{ "SP",     0  },
+	{ "LCL",    1  },
+	{ "ARG",    2  },
+	{ "THIS",   3  },
+	{ "THAT",   4  },
 	{ "SCREEN", 16384 },
 	{ "KBD",    24576 }
 };
+
+std::unordered_map<std::string, int>& getSymbolTable()
+{
+	return symbolTable;
+}
 
 InstructionType getInstructionType(const std::string& instruction)
 {
@@ -33,7 +54,7 @@ InstructionType getInstructionType(const std::string& instruction)
 }
 
 // Only for A_INSTRUCTION or L_INSTRUCTION
-int getInstructionSymbol(std::string instruction) // copied for now since it's being modified
+std::string getInstructionSymbol(std::string instruction) // copied for now since it's being modified
 {
 	InstructionType type = getInstructionType(instruction);
 
@@ -43,15 +64,13 @@ int getInstructionSymbol(std::string instruction) // copied for now since it's b
 	if (type == InstructionType::A_INSTRUCTION)
 	{
 		instruction.erase(std::remove(instruction.begin(), instruction.end(), '@'), instruction.end());
-
-		return symbolTable.contains(instruction) ? symbolTable[instruction] : std::stoi(instruction);
 	}
 
 	instruction.erase(std::remove_if(instruction.begin(), instruction.end(),
 		[](char c) { return c == '(' || c == ')'; }), instruction.end()
 	);
 
-	return std::stoi(instruction);
+	return instruction;
 }
 
 std::unordered_map<std::string, std::string> destSymbolInstructionMapping = 
