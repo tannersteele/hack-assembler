@@ -10,12 +10,13 @@
 const int A_INSTRUCTION_SIZE = 15; // A instructions must be 15 bits wide
 const int USER_VAR_SPACE_BEGINNING = 16;
 
+const int32_t ARGC_EXPECTED_COUNT = 3;
 const int32_t COMMAND_BUFFER_INIT_SIZE = 30000;
 
 const std::string C_INSTRUCTION_PREFIX = "111";
 const std::string A_INSTRUCTION_PREFIX = "0";
 
-int VARS_DECLARED = 0;
+int32_t LOCAL_VARS_DECLARED = 0;
 
 
 struct Instruction
@@ -69,12 +70,18 @@ std::string lstrip(const std::string& s)
 	return pos == std::string::npos ? "" : s.substr(pos);
 }
 
-int main()
+// TODO: Refactor + optimize + get rid of hardcoded stuff, QoL stuff
+int main(int argc, char* argv[])
 {
-	// TODO: Refactor + optimize + get rid of hardcoded stuff
-	//       Proper CLI interface for in-file/out-file
+	if (argc != ARGC_EXPECTED_COUNT)
+	{
+		std::cerr << "Usage: HackAssembler.exe <input file> <output file>" << std::endl;
+		return 1;
+	}
 
-	std::ifstream file("C:\\Users\\tanne\\Documents\\GitHub\\hack-assembler\\HackAssembler\\tests\\Pong.asm"); //convert this to something we can pass via CLI - this is OK for testing
+	std::ifstream file(argv[1]); //argv[1] = input file
+
+	std::cout << argv[2] << std::endl; 
 
 	std::vector<std::string> commandBuffer;
 	commandBuffer.reserve(COMMAND_BUFFER_INIT_SIZE); //heap allocated.. we could speed this up (cache locality) - but SBO might make this negligible 
@@ -134,7 +141,7 @@ int main()
 				}
 				else
 				{
-					int symbolicReferenceRegister = USER_VAR_SPACE_BEGINNING + (VARS_DECLARED++);
+					int symbolicReferenceRegister = USER_VAR_SPACE_BEGINNING + (LOCAL_VARS_DECLARED++);
 
 					symTable[symbol] = symbolicReferenceRegister;
 					registerValue = symbolicReferenceRegister;
@@ -153,13 +160,13 @@ int main()
 			}
 			default:
 			{
-				throw std::runtime_error("Invalid command detected"); //TODO: throw in a proper for loop for line numbering
+				std::cerr << "Invalid InstructionType detected during parsing!" << std::endl;
 				break;
 			}
 		}
 	}
 
-	std::ofstream outputHackFile("C:\\Users\\tanne\\Documents\\GitHub\\hack-assembler\\HackAssembler\\tests\\Output.hack"); //todo: formalize, no hardcoded stuff
+	std::ofstream outputHackFile(argv[2]); //argv[2] = output file
 	for (const auto& instruction : hackInstructionBuffer)
 	{
 		outputHackFile << instruction << std::endl;
