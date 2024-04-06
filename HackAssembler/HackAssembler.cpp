@@ -18,9 +18,8 @@ struct AInstruction : Instruction
 	std::string instruction;
 
 	AInstruction(const int registerValue)
+		: instruction("0" + std::bitset<A_INSTRUCTION_SIZE>(registerValue).to_string())
 	{
-		this->instruction = "0" + std::bitset<A_INSTRUCTION_SIZE>(registerValue).to_string();
-
 		std::cout << getBinaryRepr() << std::endl;
 	}
 
@@ -34,22 +33,18 @@ struct CInstruction : Instruction
 {
 	std::string instruction;
 
-	std::string dest;
-	std::string comp;
-	std::string jump;
-
 	CInstruction(std::string command)
 	{
-		this->dest = getInstructionDestination(command);
-		this->comp = getInstructionComp(command);
-		this->jump = getInstructionJump(command);
+		instruction += getInstructionComp(command);
+		instruction += getInstructionDestination(command);
+		instruction += getInstructionJump(command);
 
 		std::cout << getBinaryRepr() << std::endl;
 	}
 
 	std::string getBinaryRepr()
 	{
-		return "111" + comp + dest + jump;
+		return "111" + this->instruction;
 	}
 };
 
@@ -57,51 +52,37 @@ int main()
 {
 	// TODO: initial parse to find any symbols to populate within symboltable + remove from commands below
 	// Also we should read this from a file
+
+	// Write a black pixel to the screen
 	std::vector<std::string> commands = {
-		"@15",
-		"M=A",
+		"@SCREEN", //symbol test
+		"M=-1",
 		"D=M",
 		"@0",
-		"D;JGE"
+		"D;JLE"
 	};
-
-	// We don't even need these
-	std::vector<CInstruction> CInstructions;
-	std::vector<AInstruction> AInstructions;
 
 	for (const auto& command : commands)
 	{
-		//std::cout << command << std::endl;
-		
 		switch (getInstructionType(command))
 		{
 			case(InstructionType::A_INSTRUCTION):
-				//std::cout << "A instruction" << std::endl;
-				AInstructions.emplace_back(AInstruction(std::stoi(getInstructionSymbol(command))));
+			{
+				AInstruction aInstruction{ getInstructionSymbol(command) };
 				break;
+			}
 			case(InstructionType::C_INSTRUCTION):
-				//std::cout << "C instruction" << std::endl;
-				CInstructions.emplace_back(CInstruction(command));
+			{
+				CInstruction cInstruction{ command };
 				break;
+			}
 			default:
+			{
 				throw std::runtime_error("Invalid command detected"); //TODO: throw in a proper for loop for line numbering
 				break;
+			}
 		}
 	}
-
-
-	/*
-	// Don't modify original instruction, copy
-	std::string LInstruction = "(xxx)";
-	std::cout << "Instruction: " << getInstructionSymbol(LInstruction) << std::endl;
-	std::cout << "Original instruction: " << LInstruction << std::endl;
-
-	std::string CInstruction = "D=D+1;JLE"; //C-instruction
-	std::cout << "Instruction Dest: " << getInstructionDestination(CInstruction) << std::endl;
-	std::cout << "Instruction Comp: " << getInstructionComp(CInstruction) << std::endl;
-	std::cout << "Instruction Jump: " << getInstructionJump(CInstruction) << std::endl;
-	std::cout << "Original instruction: " << CInstruction << std::endl;
-	*/
 
 	return 0;
 }

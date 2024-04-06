@@ -12,7 +12,7 @@ enum InstructionType
 
 InstructionType getInstructionType(const std::string& instruction);
 
-std::string getInstructionSymbol(std::string instruction);
+int getInstructionSymbol(std::string instruction);
 
 std::string getInstructionDestination(std::string instruction);
 

@@ -10,6 +10,16 @@
 	TODO: Make this a state-encapsulated class
 */
 
+std::unordered_map<std::string, int> symbolTable
+{
+	{ "R0",     0 },
+	{ "R1",     1 },
+	{ "R2",     2 },
+	{ "R3",     3 },
+	{ "SCREEN", 16384 },
+	{ "KBD",    24576 }
+};
+
 InstructionType getInstructionType(const std::string& instruction)
 {
 	//HACK: formalize with some switch->case logic & improve parse schema
@@ -23,25 +33,25 @@ InstructionType getInstructionType(const std::string& instruction)
 }
 
 // Only for A_INSTRUCTION or L_INSTRUCTION
-std::string getInstructionSymbol(std::string instruction) // copied for now since it's being modified
+int getInstructionSymbol(std::string instruction) // copied for now since it's being modified
 {
 	InstructionType type = getInstructionType(instruction);
 
 	//Only process A instructions and L instructions
 	assert(type == InstructionType::A_INSTRUCTION || type == InstructionType::L_INSTRUCTION, "Invalid instruction type. `A` or `L` instruction required.");
 
-	// Need a comparison against symbol table
 	if (type == InstructionType::A_INSTRUCTION)
 	{
 		instruction.erase(std::remove(instruction.begin(), instruction.end(), '@'), instruction.end());
-		return instruction;
+
+		return symbolTable.contains(instruction) ? symbolTable[instruction] : std::stoi(instruction);
 	}
 
 	instruction.erase(std::remove_if(instruction.begin(), instruction.end(),
 		[](char c) { return c == '(' || c == ')'; }), instruction.end()
 	);
 
-	return instruction;
+	return std::stoi(instruction);
 }
 
 std::unordered_map<std::string, std::string> destSymbolInstructionMapping = 
