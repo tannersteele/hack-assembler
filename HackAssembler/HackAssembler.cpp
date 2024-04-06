@@ -64,13 +64,13 @@ bool isNumeric(const std::string& str)
 }
 
 //Move utility func
-std::string lstrip(const std::string& s)
+void stripSpaces(std::string& s)
 {
-	size_t pos = s.find_first_not_of(" \t\n\r");
-	return pos == std::string::npos ? "" : s.substr(pos);
+	s.erase(std::remove_if(s.begin(), s.end(), ::isspace), s.end());
 }
 
 // TODO: Refactor + optimize + get rid of hardcoded stuff, QoL stuff
+//       Auto capitalize stuff
 int main(int argc, char* argv[])
 {
 	if (argc != ARGC_EXPECTED_COUNT)
@@ -91,6 +91,7 @@ int main(int argc, char* argv[])
 		if (line == "") //ignore whitespace lines
 			continue;
 
+		stripSpaces(line);
 		if (line.compare(0, commentToken.size(), commentToken) == 0) //ignore comments
 			continue;
 
