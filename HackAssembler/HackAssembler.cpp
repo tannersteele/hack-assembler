@@ -20,6 +20,8 @@ struct AInstruction : Instruction
 	AInstruction(const int registerValue)
 	{
 		this->instruction = "0" + std::bitset<A_INSTRUCTION_SIZE>(registerValue).to_string();
+
+		std::cout << getBinaryRepr() << std::endl;
 	}
 
 	std::string getBinaryRepr()
@@ -41,11 +43,13 @@ struct CInstruction : Instruction
 		this->dest = getInstructionDestination(command);
 		this->comp = getInstructionComp(command);
 		this->jump = getInstructionJump(command);
+
+		std::cout << getBinaryRepr() << std::endl;
 	}
 
 	std::string getBinaryRepr()
 	{
-		return "";
+		return "111" + comp + dest + jump;
 	}
 };
 
@@ -61,21 +65,22 @@ int main()
 		"D;JGE"
 	};
 
+	// We don't even need these
 	std::vector<CInstruction> CInstructions;
 	std::vector<AInstruction> AInstructions;
 
 	for (const auto& command : commands)
 	{
-		std::cout << command << std::endl;
+		//std::cout << command << std::endl;
 		
 		switch (getInstructionType(command))
 		{
 			case(InstructionType::A_INSTRUCTION):
-				std::cout << "A instruction" << std::endl;
+				//std::cout << "A instruction" << std::endl;
 				AInstructions.emplace_back(AInstruction(std::stoi(getInstructionSymbol(command))));
 				break;
 			case(InstructionType::C_INSTRUCTION):
-				std::cout << "C instruction" << std::endl;
+				//std::cout << "C instruction" << std::endl;
 				CInstructions.emplace_back(CInstruction(command));
 				break;
 			default:

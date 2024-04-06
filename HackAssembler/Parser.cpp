@@ -64,10 +64,56 @@ std::string getInstructionDestination(std::string instruction)
 		destSymbolInstructionMapping["null"];
 }
 
+// Must use Hack ASM version of consts (using A-register trick) for any number != 0, 1, or -1
+std::unordered_map<std::string, std::string> compA0SymbolInstructionMapping = {
+	{"0",   "101010"},
+	{"1",   "111111"},
+	{"-1",  "111010"},
+	{"D",   "001100"},
+	{"A",   "110000"},
+	{"!D",  "001101"},
+	{"!A",  "110001"},
+	{"-D",  "001111"},
+	{"-A",  "110011"},
+	{"D+1", "011111"},
+	{"A+1", "110111"},
+	{"D-1", "001110"},
+	{"A-1", "110010"},
+	{"D+A", "000010"},
+	{"D-A", "010011"},
+	{"A-D", "000111"},
+	{"D&A", "000000"},
+	{"D|A", "010101"}
+};
+
+// Fortunately hack is designed in such a way that M instructions are tied to the `a` bit being 1, this makes it much easier to implement in hardware!
+// (can just mux the `a` bit to determine register values we need to operate on) => output from A register + input from 'M'
+std::unordered_map<std::string, std::string> compA1SymbolInstructionMapping = {
+	{"M",   "110000"},
+	{"!M",  "110001"},
+	{"-M",  "110001"},
+	{"M+1", "110111"},
+	{"M-1", "110010"},
+	{"D+M", "000010"},
+	{"D-M", "010011"},
+	{"M-D", "000111"},
+	{"D&M", "000000"},
+	{"D|M", "010101"}
+};
+
 std::string getInstructionComp(std::string instruction)
 {
-	size_t pos = instruction.find('=');
-	return pos != std::string::npos ? instruction.substr(pos + 1, instruction.find(';') - 2) : instruction;
+	size_t posEqual = instruction.find('=');
+	if (posEqual != std::string::npos)
+		instruction = instruction.substr(posEqual + 1);
+
+	size_t posSemi = instruction.find(";");
+	if (posSemi != std::string::npos)
+		instruction = instruction.substr(0, posSemi);
+
+	return compA0SymbolInstructionMapping.contains(instruction)
+		? std::string("0" + compA0SymbolInstructionMapping[instruction])  // a=0
+		: std::string("1" + compA1SymbolInstructionMapping[instruction]); // a=1
 }
 
 std::unordered_map<std::string, std::string> jumpSymbolInstructionMapping = 
@@ -81,7 +127,6 @@ std::unordered_map<std::string, std::string> jumpSymbolInstructionMapping =
 		{"JLE",  "110"}, // if comp <= 0; jump
 		{"JMP",  "111"}  // unconditional jump
 };
-
 
 std::string getInstructionJump(std::string instruction)
 {
