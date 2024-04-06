@@ -51,32 +51,28 @@ struct CInstruction : Instruction
 
 	std::string getBinaryRepr()
 	{
-		return C_INSTRUCTION_PREFIX + this->instruction;
+		return C_INSTRUCTION_PREFIX + instruction;
 	}
 };
 
+//Move utility func
 bool isNumeric(const std::string& str)
 {
 	return !str.empty() &&
 		std::find_if(str.begin(), str.end(), [](unsigned char c) { return !std::isdigit(c); }) == str.end();
 }
 
+//Move utility func
 std::string lstrip(const std::string& s)
 {
 	size_t pos = s.find_first_not_of(" \t\n\r");
-
-	if (pos == std::string::npos)
-	{
-		return "";
-	}
-
-	return s.substr(pos);
+	return pos == std::string::npos ? "" : s.substr(pos);
 }
 
 int main()
 {
-	// TODO: Refactor + optimize
-	//       Ignore whitespace and comments in parse step
+	// TODO: Refactor + optimize + get rid of hardcoded stuff
+	//       Proper CLI interface for in-file/out-file
 
 	std::ifstream file("C:\\Users\\tanne\\Documents\\GitHub\\hack-assembler\\HackAssembler\\tests\\Pong.asm"); //convert this to something we can pass via CLI - this is OK for testing
 
@@ -162,6 +158,13 @@ int main()
 			}
 		}
 	}
+
+	std::ofstream outputHackFile("C:\\Users\\tanne\\Documents\\GitHub\\hack-assembler\\HackAssembler\\tests\\Output.hack"); //todo: formalize, no hardcoded stuff
+	for (const auto& instruction : hackInstructionBuffer)
+	{
+		outputHackFile << instruction << std::endl;
+	}
+	outputHackFile.close();
 
 	return 0;
 }

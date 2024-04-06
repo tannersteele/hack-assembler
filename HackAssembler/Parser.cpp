@@ -79,10 +79,13 @@ std::unordered_map<std::string, std::string> destSymbolInstructionMapping =
 	{"M",    "001"}, // RAM[A]
 	{"D",    "010"}, // D register
 	{"DM",   "011"}, // D register and RAM[A]
+	{"MD",   "011"}, // D register and RAM[A] - dupe
 	{"A",    "100"}, // A register
 	{"AM",   "101"}, // A register and RAM[A]
+	{"MA",   "101"}, // A register and RAM[A] - dupe
 	{"AD",   "110"}, // A register and D register
-	{"ADM",  "111"}  // A register, D register, and RAM[A]
+	{"DA",   "110"}, // A register and D register
+	{"ADM",  "111"}  // A register, D register, and RAM[A] (only keeping this permutation of it..)
 };
 
 std::string getInstructionDestination(std::string instruction)
