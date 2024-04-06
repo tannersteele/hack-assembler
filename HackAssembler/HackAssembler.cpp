@@ -66,42 +66,88 @@ int main()
 	// TODO: initial parse to find any symbols to populate within symboltable + remove from commands below
 	// Also we should read this from a file
 
-	std::vector<std::string> commands = {
-		"@SCREEN", //symbol test
-		"M=-1",
-		"@TESTER",
-		"@TESTER",
+
+	// Will formalize this a bit more in the future, but in the mean time this acts as file input (with tokens that should NOT make it to second phase!)
+	std::vector<std::string> commandsReadIn = {
+		"(OUTERLOOP)",
+		"@SCREEN",
+		"D=A",
+		"@SCREENPTR",
+		"M=D",
+		"@PIXELCOLOR",
+		"M=0",
+		"@KBD",
 		"D=M",
-		"@0",
-		"D;JLE"
+		"@SETBLACK",
+		"D;JNE",
+		"@INNERLOOP",
+		"0;JMP",
+		"(INNERLOOP)",
+		"@PIXELCOLOR",
+		"D=M",
+		"@SCREENPTR",
+		"A=M",
+		"M=D",
+		"@SCREENPTR",
+		"M=M+1",
+		"D=M",
+		"@24575",
+		"D=D-A",
+		"@OUTERLOOP",
+		"D;JGT",
+		"@INNERLOOP",
+		"0;JMP",
+		"(SETBLACK)",
+		"@PIXELCOLOR",
+		"M=-1",
+		"@INNERLOOP",
+		"0;JMP"
 	};
 
-	std::unordered_map < std::string,int>& symTable = getSymbolTable();
+	// The actual list of commands
+	std::vector<std::string> commands;
 
-	uint16_t currLine = -1;
+	std::unordered_map <std::string, int>& symTable = getSymbolTable();
+
+	uint16_t currLine = 0;
+	for (const auto& command : commandsReadIn)
+	{
+		if (getInstructionType(command) == InstructionType::L_INSTRUCTION) // they must be unique
+		{
+			std::string symbol = getInstructionSymbol(command);
+			if (symTable.contains(symbol))
+				continue;
+
+			symTable[symbol] = currLine;
+			continue;
+		}
+
+		currLine++;
+		commands.emplace_back(command);
+	}
+
 	for (const auto& command : commands)
 	{
-		currLine++;
 		switch (getInstructionType(command)) // if we store this from the first round of processing, we don't need to re-fetch it's instruction type
 		{
 			case (InstructionType::A_INSTRUCTION):
 			{
-				std::string instruction = getInstructionSymbol(command);
-				if (symTable.contains(instruction))
+				std::string symbol = getInstructionSymbol(command);
+				if (symTable.contains(symbol))
 				{
-					AInstruction aInstruction{ symTable[instruction] };
+					AInstruction aInstruction{ symTable[symbol] };
 					continue;
 				}
 
-				if (isNumeric(instruction))
+				if (isNumeric(symbol))
 				{
-					AInstruction aInstruction{ std::stoi(instruction) };
+					AInstruction aInstruction{ std::stoi(symbol) };
 					continue;
 				}
 
 				int symbolicReferenceRegister = USER_VAR_SPACE_BEGINNING + (VARS_DECLARED++);
 
-				symTable[instruction] = symbolicReferenceRegister;
+				symTable[symbol] = symbolicReferenceRegister;
 				AInstruction aInstruction{ symbolicReferenceRegister };
 				break;
 			}
