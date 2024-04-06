@@ -63,9 +63,9 @@ bool isNumeric(const std::string& str)
 
 int main()
 {
-	// TODO: initial parse to find any symbols to populate within symboltable + remove from commands below
-	// Also we should read this from a file
-
+	// TODO: Refactor + optimize
+	//       Read in ASM from a file
+	//       Ignore whitespace and comments in parse step
 
 	// Will formalize this a bit more in the future, but in the mean time this acts as file input (with tokens that should NOT make it to second phase!)
 	std::vector<std::string> commandsReadIn = {
@@ -106,7 +106,6 @@ int main()
 
 	// The actual list of commands
 	std::vector<std::string> commands;
-
 	std::unordered_map <std::string, int>& symTable = getSymbolTable();
 
 	uint16_t currLine = 0;
