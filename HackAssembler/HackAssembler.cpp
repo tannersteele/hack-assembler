@@ -81,10 +81,9 @@ int main(int argc, char* argv[])
 
 	std::ifstream file(argv[1]); //argv[1] = input file
 
-	std::cout << argv[2] << std::endl; 
-
 	std::vector<std::string> commandBuffer;
-	commandBuffer.reserve(COMMAND_BUFFER_INIT_SIZE); //heap allocated.. we could speed this up (cache locality) - but SBO might make this negligible 
+	commandBuffer.reserve(COMMAND_BUFFER_INIT_SIZE); //heap allocated.. we could speed this up (cache locality) - but SBO might make this negligible
+
 	std::string line;
 	std::string commentToken = "//";
 	while (std::getline(file, line))
