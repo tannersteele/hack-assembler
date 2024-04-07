@@ -7,6 +7,7 @@
 #include <bitset>
 #include <fstream>
 #include <algorithm>
+#include <chrono>
 
 const int A_INSTRUCTION_SIZE = 15; // A instructions must be 15 bits wide
 const int USER_VAR_SPACE_BEGINNING = 16;
@@ -85,6 +86,8 @@ int main(int argc, char* argv[])
 	std::unordered_map<std::string,int> symTable = getSymbolTable();
 
 	uint16_t currLine = 0;
+
+	auto start = std::chrono::high_resolution_clock::now();
 	while (std::getline(file, line))
 	{
 		if (line == "")
@@ -121,7 +124,7 @@ int main(int argc, char* argv[])
 	std::ofstream output_hack_file("C:\\Users\\tanne\\Documents\\GitHub\\hack-assembler\\HackAssembler\\tests\\Ponger.hack");
 	for (const auto& command : commands)
 	{
-		switch (getInstructionType(command)) // if we store this from the first round of processing, we don't need to re-fetch it's instruction type
+		switch (getInstructionType(command))
 		{
 			case (InstructionType::A_INSTRUCTION):
 			{
@@ -134,7 +137,7 @@ int main(int argc, char* argv[])
 				}
 				else if (std::all_of(symbol.begin(), symbol.end(), ::isdigit))
 				{
-					registerValue = (std::stoi(symbol));
+					registerValue = std::stoi(symbol);
 				}
 				else
 				{
@@ -163,6 +166,9 @@ int main(int argc, char* argv[])
 		}
 	}
 	output_hack_file.close(); //wrap in some class and add to dtor
+	auto end = std::chrono::high_resolution_clock::now();
+
+	std::cout << "Execution time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms " << std::endl;
 
 	return 0;
 }
