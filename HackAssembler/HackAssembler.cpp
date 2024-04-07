@@ -6,6 +6,7 @@
 #include <vector>
 #include <bitset>
 #include <fstream>
+#include <algorithm>
 
 const int A_INSTRUCTION_SIZE = 15; // A instructions must be 15 bits wide
 const int USER_VAR_SPACE_BEGINNING = 16;
@@ -15,25 +16,24 @@ const int32_t COMMAND_BUFFER_INIT_SIZE = 30000;
 
 const std::string C_INSTRUCTION_PREFIX = "111";
 const std::string A_INSTRUCTION_PREFIX = "0";
-
-int32_t LOCAL_VARS_DECLARED = 0;
+const std::string COMMENT_TOKEN = "//";
 
 
 struct Instruction
 {
-	virtual std::string getBinaryRepr() = 0;
+	virtual std::string get_binary_repr() const = 0;
 };
 
 struct AInstruction : Instruction
 {
 	std::string instruction;
 
-	AInstruction(int registerValue)
-		: instruction(A_INSTRUCTION_PREFIX + std::bitset<A_INSTRUCTION_SIZE>(registerValue).to_string()) // Some protection for total size would be nice here
+	explicit AInstruction(int register_value)
+		: instruction(::A_INSTRUCTION_PREFIX + std::bitset<::A_INSTRUCTION_SIZE>(register_value).to_string()) // Some protection for total size would be nice here
 	{
 	}
 
-	std::string getBinaryRepr()
+	inline std::string get_binary_repr() const override
 	{
 		return instruction;
 	}
@@ -43,119 +43,116 @@ struct CInstruction : Instruction
 {
 	std::string instruction;
 
-	CInstruction(std::string command)
+	explicit CInstruction(std::string command)
 	{
 		instruction += getInstructionComp(command);
 		instruction += getInstructionDestination(command);
 		instruction += getInstructionJump(command);
+
+		instruction = C_INSTRUCTION_PREFIX + instruction;
 	}
 
-	std::string getBinaryRepr()
+	std::string get_binary_repr() const override
 	{
-		return C_INSTRUCTION_PREFIX + instruction;
+		return instruction;
 	}
 };
 
 //Move utility func
-bool isNumeric(const std::string& str)
+inline void strip_spaces(std::string& str)
 {
-	return !str.empty() &&
-		std::find_if(str.begin(), str.end(), [](unsigned char c) { return !std::isdigit(c); }) == str.end();
+	str.erase(std::remove_if(str.begin(), str.end(), ::isspace), str.end());
 }
 
-//Move utility func
-void stripSpaces(std::string& s)
-{
-	s.erase(std::remove_if(s.begin(), s.end(), ::isspace), s.end());
-}
 
 // TODO: Refactor + optimize + get rid of hardcoded stuff, QoL stuff
 //       Auto capitalize stuff
+//       Support same line commenting (split everything past // on a line)
 int main(int argc, char* argv[])
 {
-	if (argc != ARGC_EXPECTED_COUNT)
-	{
-		std::cerr << "Usage: HackAssembler.exe <input file> <output file>" << std::endl;
-		return 1;
-	}
+	//if (argc != ARGC_EXPECTED_COUNT)
+	//{
+	//	std::cerr << "Usage: HackAssembler.exe <input file> <output file>" << std::endl;
+	//	return 1;
+	//}
 
-	std::ifstream file(argv[1]); //argv[1] = input file
-
-	std::vector<std::string> commandBuffer;
-	commandBuffer.reserve(COMMAND_BUFFER_INIT_SIZE); //heap allocated.. we could speed this up (cache locality) - but SBO might make this negligible
+	std::ifstream file("C:\\Users\\tanne\\Documents\\GitHub\\nand2tetris-exercises\\projects\\06\\pong\\Pong.asm"); //argv[1] = input file
 
 	std::string line;
-	std::string commentToken = "//";
-	while (std::getline(file, line))
-	{
-		if (line == "") //ignore whitespace lines
-			continue;
-
-		stripSpaces(line);
-		if (line.compare(0, commentToken.size(), commentToken) == 0) //ignore comments
-			continue;
-
-		commandBuffer.emplace_back(line);
-	}
-
-	// The actual list of commands
 	std::vector<std::string> commands;
-	std::unordered_map <std::string, int>& symTable = getSymbolTable();
+	commands.reserve(::COMMAND_BUFFER_INIT_SIZE); // heap allocated..we could speed this up(cache locality) - but SBO might make this negligible
+
+	std::unordered_map<std::string,int> symTable = getSymbolTable();
 
 	uint16_t currLine = 0;
-	for (const auto& command : commandBuffer)
+	while (std::getline(file, line))
 	{
-		if (getInstructionType(command) == InstructionType::L_INSTRUCTION) // they must be unique
+		if (line == "")
+			continue;
+
+		strip_spaces(line);
+
+		if (line.compare(0, COMMENT_TOKEN.size(), COMMENT_TOKEN) == 0)
+			continue;
+
+		//Ensure anything in a comment is factored out BY THIS POINT
+
+		// Move to func
+		if (line.find("(") != std::string::npos)
 		{
-			std::string symbol = getInstructionSymbol(command);
-			if (symTable.contains(symbol))
+			line.erase(std::remove_if(line.begin(), line.end(),
+				[](char c) { return c == '(' || c == ')'; }), line.end()
+			);
+
+			if (symTable.contains(line))
 				continue;
 
-			symTable[symbol] = currLine;
+			symTable[line] = currLine;
 			continue;
 		}
 
 		currLine++;
-		commands.emplace_back(command);
+		commands.emplace_back(line);
 	}
-	commandBuffer.clear();
 
-	std::vector<std::string> hackInstructionBuffer;
-	hackInstructionBuffer.reserve(COMMAND_BUFFER_INIT_SIZE);
+	int32_t local_vars_declared = 0;
+
+
+	std::ofstream output_hack_file("C:\\Users\\tanne\\Documents\\GitHub\\hack-assembler\\HackAssembler\\tests\\Ponger.hack");
 	for (const auto& command : commands)
 	{
 		switch (getInstructionType(command)) // if we store this from the first round of processing, we don't need to re-fetch it's instruction type
 		{
 			case (InstructionType::A_INSTRUCTION):
 			{
-				int registerValue;
+				int32_t registerValue = 0;
 				std::string symbol = getInstructionSymbol(command);
 
 				if (symTable.contains(symbol))
 				{
 					registerValue = symTable[symbol];
 				}
-				else if (isNumeric(symbol))
+				else if (std::all_of(symbol.begin(), symbol.end(), ::isdigit))
 				{
-					registerValue = std::stoi(symbol);
+					registerValue = (std::stoi(symbol));
 				}
 				else
 				{
-					int symbolicReferenceRegister = USER_VAR_SPACE_BEGINNING + (LOCAL_VARS_DECLARED++);
+					int symbolicReferenceRegister = ::USER_VAR_SPACE_BEGINNING + (local_vars_declared++);
 
 					symTable[symbol] = symbolicReferenceRegister;
 					registerValue = symbolicReferenceRegister;
 				}
 
 				AInstruction aInstruction{ registerValue };
-				hackInstructionBuffer.emplace_back(aInstruction.getBinaryRepr());
+				output_hack_file << aInstruction.get_binary_repr() << std::endl;
 				break;
 			}
 			case (InstructionType::C_INSTRUCTION):
 			{
 				// Could write these instructions to a generic Instruction array, then when we want to export everything is already in order (polymorphism!)
 				CInstruction cInstruction{ command };
-				hackInstructionBuffer.emplace_back(cInstruction.getBinaryRepr());
+				output_hack_file << cInstruction.get_binary_repr() << std::endl; //gross dupe stuff, can be optimized
 				break;
 			}
 			default:
@@ -165,13 +162,7 @@ int main(int argc, char* argv[])
 			}
 		}
 	}
-
-	std::ofstream outputHackFile(argv[2]); //argv[2] = output file
-	for (const auto& instruction : hackInstructionBuffer)
-	{
-		outputHackFile << instruction << std::endl;
-	}
-	outputHackFile.close();
+	output_hack_file.close(); //wrap in some class and add to dtor
 
 	return 0;
 }
