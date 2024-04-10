@@ -53,23 +53,10 @@ InstructionType getInstructionType(const std::string& instruction)
 	return InstructionType::C_INSTRUCTION;
 }
 
-// Only for A_INSTRUCTION or L_INSTRUCTION
+// Only for A_INSTRUCTION
 std::string getInstructionSymbol(std::string instruction) // copied for now since it's being modified
 {
-	InstructionType type = getInstructionType(instruction);
-
-	//Only process A instructions and L instructions
-	assert(type == InstructionType::A_INSTRUCTION || type == InstructionType::L_INSTRUCTION, "Invalid instruction type. `A` or `L` instruction required.");
-
-	if (type == InstructionType::A_INSTRUCTION)
-	{
-		instruction.erase(std::remove(instruction.begin(), instruction.end(), '@'), instruction.end());
-	}
-
-	instruction.erase(std::remove_if(instruction.begin(), instruction.end(),
-		[](char c) { return c == '(' || c == ')'; }), instruction.end()
-	);
-
+	instruction.erase(std::remove(instruction.begin(), instruction.end(), '@'), instruction.end());
 	return instruction;
 }
 
@@ -135,6 +122,7 @@ std::unordered_map<std::string, std::string> compA1SymbolInstructionMapping = {
 
 std::string getInstructionComp(std::string instruction)
 {
+	// would be nice to parse these out before getting here
 	size_t posEqual = instruction.find('=');
 	if (posEqual != std::string::npos)
 		instruction = instruction.substr(posEqual + 1);
@@ -160,7 +148,7 @@ std::unordered_map<std::string, std::string> jumpSymbolInstructionMapping =
 		{"JMP",  "111"}  // unconditional jump
 };
 
-std::string getInstructionJump(std::string instruction)
+std::string getInstructionJump(const std::string& instruction)
 {
 	size_t pos = instruction.find(';');
 	return pos != std::string::npos ?
