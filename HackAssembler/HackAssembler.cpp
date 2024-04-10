@@ -71,15 +71,14 @@ inline void strip_spaces(std::string& str)
 //       Support same line commenting (split everything past // on a line)
 int main(int argc, char* argv[])
 {
-	//if (argc != ARGC_EXPECTED_COUNT)
-	//{
-	//	std::cerr << "Usage: HackAssembler.exe <input file> <output file>" << std::endl;
-	//	return 1;
-	//}
+	if (argc != ARGC_EXPECTED_COUNT)
+	{
+		std::cerr << "Usage: HackAssembler.exe <input file> <output file>" << std::endl;
+		return 1;
+	}
 
-	std::ifstream file("C:\\Users\\tanne\\Documents\\GitHub\\nand2tetris-exercises\\projects\\06\\pong\\Pong.asm"); //argv[1] = input file
+	std::ifstream file(argv[1]); //argv[1] = input file
 
-	std::string line;
 	std::vector<std::string> commands;
 	commands.reserve(::COMMAND_BUFFER_INIT_SIZE); // heap allocated..we could speed this up(cache locality) - but SBO might make this negligible
 
@@ -88,6 +87,7 @@ int main(int argc, char* argv[])
 	uint16_t currLine = 0;
 
 	auto start = std::chrono::high_resolution_clock::now();
+	std::string line;
 	while (std::getline(file, line))
 	{
 		if (line == "")
@@ -120,8 +120,7 @@ int main(int argc, char* argv[])
 
 	int32_t local_vars_declared = 0;
 
-
-	std::ofstream output_hack_file("C:\\Users\\tanne\\Documents\\GitHub\\hack-assembler\\HackAssembler\\tests\\Ponger.hack");
+	std::ofstream output_hack_file(argv[2]);
 	for (const auto& command : commands)
 	{
 		switch (getInstructionType(command))
@@ -153,7 +152,6 @@ int main(int argc, char* argv[])
 			}
 			case (InstructionType::C_INSTRUCTION):
 			{
-				// Could write these instructions to a generic Instruction array, then when we want to export everything is already in order (polymorphism!)
 				CInstruction cInstruction{ command };
 				output_hack_file << cInstruction.get_binary_repr() << std::endl; //gross dupe stuff, can be optimized
 				break;
@@ -168,7 +166,7 @@ int main(int argc, char* argv[])
 	output_hack_file.close(); //wrap in some class and add to dtor
 	auto end = std::chrono::high_resolution_clock::now();
 
-	std::cout << "Execution time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms " << std::endl;
+	std::cout << "Execution time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms." << std::endl;
 
 	return 0;
 }
