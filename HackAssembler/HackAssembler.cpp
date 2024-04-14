@@ -9,9 +9,8 @@
 #include <algorithm>
 #include <chrono>
 
-const int A_INSTRUCTION_SIZE = 15; // A instructions must be 15 bits wide
-const int USER_VAR_SPACE_BEGINNING = 16;
-
+const int32_t A_INSTRUCTION_SIZE = 15; // A instructions must be 15 bits wide
+const int32_t USER_VAR_SPACE_BEGINNING = 16;
 const int32_t ARGC_EXPECTED_COUNT = 3;
 const int32_t COMMAND_BUFFER_INIT_SIZE = 30000;
 
@@ -69,7 +68,7 @@ inline void strip_spaces(std::string& str)
 // TODO: Refactor + optimize + get rid of hardcoded stuff, QoL stuff
 //       Auto capitalize stuff
 //       Support same line commenting (split everything past // on a line)
-int main(int argc, char* argv[])
+int _main(int argc, char* argv[])
 {
 	if (argc != ARGC_EXPECTED_COUNT)
 	{
@@ -123,6 +122,7 @@ int main(int argc, char* argv[])
 	std::ofstream output_hack_file(argv[2]);
 	for (const auto& command : commands)
 	{
+		Instruction *currInstruction;
 		switch (getInstructionType(command))
 		{
 			case (InstructionType::A_INSTRUCTION):
@@ -147,21 +147,22 @@ int main(int argc, char* argv[])
 				}
 
 				AInstruction aInstruction{ registerValue };
-				output_hack_file << aInstruction.get_binary_repr() << std::endl;
+				currInstruction = &aInstruction;
 				break;
 			}
 			case (InstructionType::C_INSTRUCTION):
 			{
 				CInstruction cInstruction{ command };
-				output_hack_file << cInstruction.get_binary_repr() << std::endl; //gross dupe stuff, can be optimized
+				currInstruction = &cInstruction;
 				break;
 			}
 			default:
 			{
 				std::cerr << "Invalid InstructionType detected during parsing!" << std::endl;
-				break;
+				return -1;
 			}
 		}
+		output_hack_file << currInstruction->get_binary_repr() << std::endl;
 	}
 	output_hack_file.close(); //wrap in some class and add to dtor
 	auto end = std::chrono::high_resolution_clock::now();
