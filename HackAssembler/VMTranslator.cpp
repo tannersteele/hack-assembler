@@ -47,16 +47,19 @@ public:
 			get_command_type(cmd);
 
 			cmd = get_first_arg(cmd);
-
 		}
 	}
 
 	command_type get_command_type(std::string& command)
 	{
-		std::string substr = "pop";
-		size_t pos = 0;
-		while ((pos == command.find("pop")) != std::string::npos)
-			command.erase(pos, substr.length());
+		// Refactor all this
+		std::string push_substr = "push ";
+		if (command.find(push_substr) == 0)
+			command.erase(0, push_substr.length());
+
+		std::string pop_substr = "pop ";
+		if (command.find(pop_substr) == 0)
+			command.erase(0, pop_substr.length());
 
 		return command_type::c_arithmetic;
 	}
@@ -74,6 +77,7 @@ public:
 
 	std::string get_second_arg()
 	{
+		return "";
 	}
 };
 
