@@ -1,9 +1,5 @@
 #include <string>
-#include <iostream>
-#include <algorithm>
-#include <cassert>
 #include <unordered_map>
-
 #include "Parser.h"
 
 /*
@@ -46,7 +42,7 @@ InstructionType getInstructionType(const std::string& instruction)
 	//HACK: formalize with some switch->case logic & improve parse schema
 	if (containsSubstring(instruction, "@"))
 		return InstructionType::A_INSTRUCTION;
-	else if (containsSubstring(instruction, "("))
+	if (containsSubstring(instruction, "("))
 		return InstructionType::L_INSTRUCTION;
 
 	// Just default as a C-instruction for now
@@ -56,7 +52,7 @@ InstructionType getInstructionType(const std::string& instruction)
 // Only for A_INSTRUCTION
 std::string getInstructionSymbol(std::string instruction) // copied for now since it's being modified
 {
-	instruction.erase(std::remove(instruction.begin(), instruction.end(), '@'), instruction.end());
+	std::erase(instruction, '@');
 	return instruction;
 }
 
@@ -75,9 +71,9 @@ std::unordered_map<std::string, std::string> destSymbolInstructionMapping =
 	{"ADM",  "111"}  // A register, D register, and RAM[A] (only keeping this permutation of it..)
 };
 
-std::string getInstructionDestination(std::string instruction)
+std::string getInstructionDestination(const std::string& instruction)
 {
-	size_t pos = instruction.find('=');
+	const size_t pos = instruction.find('=');
 	return pos != std::string::npos ? 
 		destSymbolInstructionMapping[instruction.substr(0, pos)] : 
 		destSymbolInstructionMapping["null"];
@@ -127,7 +123,7 @@ std::string getInstructionComp(std::string instruction)
 	if (posEqual != std::string::npos)
 		instruction = instruction.substr(posEqual + 1);
 
-	size_t posSemi = instruction.find(";");
+	size_t posSemi = instruction.find(';');
 	if (posSemi != std::string::npos)
 		instruction = instruction.substr(0, posSemi);
 
@@ -150,7 +146,7 @@ std::unordered_map<std::string, std::string> jumpSymbolInstructionMapping =
 
 std::string getInstructionJump(const std::string& instruction)
 {
-	size_t pos = instruction.find(';');
+	const size_t pos = instruction.find(';');
 	return pos != std::string::npos ?
 		jumpSymbolInstructionMapping[instruction.substr(pos + 1)] 
 		: jumpSymbolInstructionMapping["null"];

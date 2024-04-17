@@ -9,10 +9,10 @@
 #include <algorithm>
 #include <chrono>
 
-const int32_t A_INSTRUCTION_SIZE = 15; // A instructions must be 15 bits wide
-const int32_t USER_VAR_SPACE_BEGINNING = 16;
-const int32_t ARGC_EXPECTED_COUNT = 3;
-const int32_t COMMAND_BUFFER_INIT_SIZE = 30000;
+constexpr int32_t A_INSTRUCTION_SIZE = 15; // A instructions must be 15 bits wide
+constexpr int32_t USER_VAR_SPACE_BEGINNING = 16;
+constexpr int32_t ARGC_EXPECTED_COUNT = 3;
+constexpr int32_t COMMAND_BUFFER_INIT_SIZE = 30000;
 
 const std::string C_INSTRUCTION_PREFIX = "111";
 const std::string A_INSTRUCTION_PREFIX = "0";
@@ -21,6 +21,7 @@ const std::string COMMENT_TOKEN = "//";
 
 struct Instruction
 {
+	virtual ~Instruction() = default;
 	virtual std::string get_binary_repr() const = 0;
 };
 
@@ -33,7 +34,7 @@ struct AInstruction : Instruction
 	{
 	}
 
-	inline std::string get_binary_repr() const override
+	[[nodiscard]] std::string get_binary_repr() const override
 	{
 		return instruction;
 	}
@@ -43,7 +44,7 @@ struct CInstruction : Instruction
 {
 	std::string instruction;
 
-	explicit CInstruction(std::string command)
+	explicit CInstruction(const std::string& command)
 	{
 		instruction += getInstructionComp(command);
 		instruction += getInstructionDestination(command);
@@ -52,18 +53,18 @@ struct CInstruction : Instruction
 		instruction = C_INSTRUCTION_PREFIX + instruction;
 	}
 
-	std::string get_binary_repr() const override
+	[[nodiscard]] std::string get_binary_repr() const override
 	{
 		return instruction;
 	}
 };
 
+
 //Move utility func
 inline void strip_spaces(std::string& str)
 {
-	str.erase(std::remove_if(str.begin(), str.end(), ::isspace), str.end());
+	std::erase_if(str, ::isspace);
 }
-
 
 // TODO: Refactor + optimize + get rid of hardcoded stuff, QoL stuff
 //       Auto capitalize stuff
@@ -72,7 +73,7 @@ int _main(int argc, char* argv[])
 {
 	if (argc != ARGC_EXPECTED_COUNT)
 	{
-		std::cerr << "Usage: HackAssembler.exe <input file> <output file>" << std::endl;
+		std::cerr << "Usage: HackAssembler.exe <input file> <output file>" << '\n';
 		return 1;
 	}
 
@@ -81,15 +82,15 @@ int _main(int argc, char* argv[])
 	std::vector<std::string> commands;
 	commands.reserve(::COMMAND_BUFFER_INIT_SIZE); // heap allocated..we could speed this up(cache locality) - but SBO might make this negligible
 
-	std::unordered_map<std::string,int> symTable = getSymbolTable();
+	std::unordered_map<std::string,int> sym_table = getSymbolTable();
 
-	uint16_t currLine = 0;
+	uint16_t curr_line = 0;
 
 	auto start = std::chrono::high_resolution_clock::now();
 	std::string line;
 	while (std::getline(file, line))
 	{
-		if (line == "")
+		if (line.empty())
 			continue;
 
 		strip_spaces(line);
@@ -100,20 +101,18 @@ int _main(int argc, char* argv[])
 		//Ensure anything in a comment is factored out BY THIS POINT
 
 		// Move to func
-		if (line.find("(") != std::string::npos)
+		if (line.find('(') != std::string::npos)
 		{
-			line.erase(std::remove_if(line.begin(), line.end(),
-				[](char c) { return c == '(' || c == ')'; }), line.end()
-			);
+			std::erase_if(line,[](const char c) { return c == '(' || c == ')'; });
 
-			if (symTable.contains(line))
+			if (sym_table.contains(line))
 				continue;
 
-			symTable[line] = currLine;
+			sym_table[line] = curr_line;
 			continue;
 		}
 
-		currLine++;
+		curr_line++;
 		commands.emplace_back(line);
 	}
 
@@ -122,52 +121,53 @@ int _main(int argc, char* argv[])
 	std::ofstream output_hack_file(argv[2]);
 	for (const auto& command : commands)
 	{
-		Instruction *currInstruction;
+		Instruction *curr_instruction;
+
 		switch (getInstructionType(command))
 		{
-			case (InstructionType::A_INSTRUCTION):
+			case (A_INSTRUCTION):
 			{
-				int32_t registerValue = 0;
+				int32_t register_value = 0;
 				std::string symbol = getInstructionSymbol(command);
 
-				if (symTable.contains(symbol))
+				if (sym_table.contains(symbol))
 				{
-					registerValue = symTable[symbol];
+					register_value = sym_table[symbol];
 				}
-				else if (std::all_of(symbol.begin(), symbol.end(), ::isdigit))
+				else if (std::ranges::all_of(symbol, ::isdigit))
 				{
-					registerValue = std::stoi(symbol);
+					register_value = std::stoi(symbol);
 				}
 				else
 				{
 					int symbolicReferenceRegister = ::USER_VAR_SPACE_BEGINNING + (local_vars_declared++);
 
-					symTable[symbol] = symbolicReferenceRegister;
-					registerValue = symbolicReferenceRegister;
+					sym_table[symbol] = symbolicReferenceRegister;
+					register_value = symbolicReferenceRegister;
 				}
 
-				AInstruction aInstruction{ registerValue };
-				currInstruction = &aInstruction;
+				AInstruction aInstruction{ register_value };
+				curr_instruction = &aInstruction;
 				break;
 			}
-			case (InstructionType::C_INSTRUCTION):
+			case (C_INSTRUCTION):
 			{
-				CInstruction cInstruction{ command };
-				currInstruction = &cInstruction;
+				CInstruction c_instruction{ command };
+				curr_instruction = &c_instruction;
 				break;
 			}
 			default:
 			{
-				std::cerr << "Invalid InstructionType detected during parsing!" << std::endl;
+				std::cerr << "Invalid InstructionType detected during parsing!" << '\n';
 				return -1;
 			}
 		}
-		output_hack_file << currInstruction->get_binary_repr() << std::endl;
+		output_hack_file << curr_instruction->get_binary_repr() << '\n';
 	}
 	output_hack_file.close(); //wrap in some class and add to dtor
 	auto end = std::chrono::high_resolution_clock::now();
 
-	std::cout << "Execution time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms." << std::endl;
+	std::cout << "Execution time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms." << '\n';
 
 	return 0;
 }

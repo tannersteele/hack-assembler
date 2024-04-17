@@ -17,7 +17,7 @@ InstructionType getInstructionType(const std::string& instruction);
 
 std::string getInstructionSymbol(std::string instruction);
 
-std::string getInstructionDestination(std::string instruction);
+std::string getInstructionDestination(const std::string& instruction);
 
 std::string getInstructionComp(std::string instruction);
 
