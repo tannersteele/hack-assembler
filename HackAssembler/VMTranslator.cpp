@@ -43,20 +43,30 @@ public:
 
 		for (const auto& command : commands)
 		{
-			std::cout << command << '\n';
+			std::string cmd = command;
+			get_command_type(cmd);
+
+			cmd = get_first_arg(cmd);
+
 		}
 	}
 
-	command_type get_command_type()
+	command_type get_command_type(std::string& command)
 	{
+		std::string substr = "pop";
+		size_t pos = 0;
+		while ((pos == command.find("pop")) != std::string::npos)
+			command.erase(pos, substr.length());
+
+		return command_type::c_arithmetic;
 	}
 
-	std::string get_first_arg(const std::string& command)
+	[[nodiscard]] std::string get_first_arg(const std::string& command) const
 	{
 		if (current_command_type_ == command_type::c_return)
 			return "";
 
-		size_t pos = command.find(' ');
+		const size_t pos = command.find(' ');
 		return pos != std::string::npos ?
 			command.substr(0, pos) :
 			command;

@@ -41,12 +41,12 @@ InstructionType getInstructionType(const std::string& instruction)
 {
 	//HACK: formalize with some switch->case logic & improve parse schema
 	if (containsSubstring(instruction, "@"))
-		return InstructionType::A_INSTRUCTION;
+		return A_INSTRUCTION;
 	if (containsSubstring(instruction, "("))
-		return InstructionType::L_INSTRUCTION;
+		return L_INSTRUCTION;
 
 	// Just default as a C-instruction for now
-	return InstructionType::C_INSTRUCTION;
+	return C_INSTRUCTION;
 }
 
 // Only for A_INSTRUCTION
