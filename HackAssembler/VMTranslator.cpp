@@ -28,7 +28,7 @@ public:
 	parser(): current_command_type_()
 	{
 		// Some test commands..
-		std::vector<std::string> commands =
+		const std::vector<std::string> commands =
 		{
 			"push constant 111", "push constant 333", "push constant 888", "pop static 8", "add"
 		};
@@ -41,50 +41,79 @@ public:
 		// @SP
 		// M=M+1
 
+		// Add example, could probably optimize?
+		// @SP (top of stack)
+		// M=M-1 (move to the first register we're processing)
+		// A=M (set A register to that register we want to process)
+		// D=M (actually fetch the value inside the register)
+		// M=0 (set the register to 0 since we're 'popping' it)
+		// @SP (reset our A register to stack pointer)
+		// A=M-1 (move to 2nd argument in add expression)
+		// M=D+M (add x + y then store result in pre-existing register)
+
 		for (const auto& command : commands)
 		{
 			std::string cmd = command;
-			get_command_type(cmd);
+			current_command_type_ = get_command_type(cmd);
 
-			cmd = get_first_arg(cmd);
+			if (current_command_type_ == c_arithmetic)
+				continue;
+
+			std::string first_arg = get_first_arg(cmd);
+			std::string second_arg = get_second_arg(cmd);
 		}
 	}
 
-	command_type get_command_type(std::string& command)
+	static command_type get_command_type(std::string& command)
 	{
 		// Refactor all this
+		if (command == "eq" || command == "lt" || command == "gt" || command == "and" || command == "or" || command == "not" || command == "add" || command == "neg")
+			return c_arithmetic;
+
 		std::string push_substr = "push ";
 		if (command.find(push_substr) == 0)
+		{
 			command.erase(0, push_substr.length());
+			return c_push;
+		}
 
 		std::string pop_substr = "pop ";
 		if (command.find(pop_substr) == 0)
+		{
 			command.erase(0, pop_substr.length());
+			return c_pop;
+		}
 
-		return command_type::c_arithmetic;
+		return none;
 	}
 
-	[[nodiscard]] std::string get_first_arg(const std::string& command) const
-	{
-		if (current_command_type_ == command_type::c_return)
-			return "";
+	static std::string parse_substring(std::string& original_string, bool trim_after_space);
 
-		const size_t pos = command.find(' ');
-		return pos != std::string::npos ?
-			command.substr(0, pos) :
-			command;
+	[[nodiscard]] static std::string get_first_arg(std::string command) // copy here, get_second_arg still needs full string (for now!)
+	{
+		parse_substring(command, false);
+		return command;
 	}
 
-	std::string get_second_arg()
+	[[nodiscard]] static std::string get_second_arg(std::string& command) // no copy needed, mangle the string
 	{
-		return "";
+		parse_substring(command, true);
+		return command;
 	}
 };
 
-class CodeWriter
+std::string parser::parse_substring(std::string& original_string, const bool trim_after_space)
+{
+	const size_t pos = original_string.find(' ');
+	return pos != std::string::npos ?
+		original_string.substr(trim_after_space ? pos : 0, trim_after_space ? original_string.length() : pos) :
+		original_string;
+}
+
+class code_writer
 {
 public:
-	CodeWriter()
+	code_writer()
 	{
 	}
 
