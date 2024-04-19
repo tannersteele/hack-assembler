@@ -86,14 +86,12 @@ public:
 
 	static command_type get_command_type(std::string& command)
 	{
-		if (command == "eq" || command == "lt" || command == "gt" || command == "and" || command == "or" || command == "not" || command == "add" || command == "neg")
+		if (command == "eq" || command == "lt" || command == "gt" || command == "and" || command == "or" || 
+			command == "not" || command == "add" || command == "neg")
 			return c_arithmetic;
 
-		if (check_operation_modify_command(command, "push "))
-			return c_push;
-
-		if (check_operation_modify_command(command, "pop "))
-			return c_pop;
+		if (check_operation_modify_command(command, "push ")) return c_push;
+		if (check_operation_modify_command(command, "pop ")) return c_pop;
 
 		return none;
 	}
