@@ -41,6 +41,14 @@ public:
 		// @SP
 		// M=M+1
 
+		// RAM[0] => stack pointer (this addr contains mem addr containing topmost stack value)
+		// RAM[16]->RAM[255] => static variables
+		// RAM[256]->RAM[2047] => stack
+		// "Push constant" doesn't fetch a variable from anywhere, just does the address trick
+
+		// pop -> SP-- followed by x = RAM[SP]
+		// add, sub, eq, gt, lt have 2 implicit operands (all supported by alu - will be similar to add operation below except last instruction will change!)
+
 		// Add example, could probably optimize?
 		// @SP (top of stack)
 		// M=M-1 (move to the first register we're processing)
