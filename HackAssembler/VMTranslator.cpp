@@ -68,34 +68,37 @@ public:
 				continue;
 
 			std::string first_arg = get_first_arg(cmd);
-			std::string second_arg = get_second_arg(cmd);
+			get_second_arg(cmd);
+			std::string second_arg = cmd;
 		}
+	}
+
+	static bool check_operation_modify_command(std::string& command, const std::string& operation)
+	{
+		if (command.find(operation) == 0)
+		{
+			command.erase(0, operation.length());
+			return true;
+		}
+
+		return false;
 	}
 
 	static command_type get_command_type(std::string& command)
 	{
-		// Refactor all this
 		if (command == "eq" || command == "lt" || command == "gt" || command == "and" || command == "or" || command == "not" || command == "add" || command == "neg")
 			return c_arithmetic;
 
-		std::string push_substr = "push ";
-		if (command.find(push_substr) == 0)
-		{
-			command.erase(0, push_substr.length());
+		if (check_operation_modify_command(command, "push "))
 			return c_push;
-		}
 
-		std::string pop_substr = "pop ";
-		if (command.find(pop_substr) == 0)
-		{
-			command.erase(0, pop_substr.length());
+		if (check_operation_modify_command(command, "pop "))
 			return c_pop;
-		}
 
 		return none;
 	}
 
-	static std::string parse_substring(std::string& original_string, bool trim_after_space);
+	static void parse_substring(std::string& original_string, bool trim_after_space);
 
 	[[nodiscard]] static std::string get_first_arg(std::string command) // copy here, get_second_arg still needs full string (for now!)
 	{
@@ -103,19 +106,17 @@ public:
 		return command;
 	}
 
-	[[nodiscard]] static std::string get_second_arg(std::string& command) // no copy needed, mangle the string
+	static void get_second_arg(std::string& command) // no copy needed, mangle the string
 	{
 		parse_substring(command, true);
-		return command;
 	}
 };
 
-std::string parser::parse_substring(std::string& original_string, const bool trim_after_space)
+void parser::parse_substring(std::string& original_string, const bool trim_after_space)
 {
 	const size_t pos = original_string.find(' ');
-	return pos != std::string::npos ?
-		original_string.substr(trim_after_space ? pos : 0, trim_after_space ? original_string.length() : pos) :
-		original_string;
+	if (pos != std::string::npos)
+		original_string = original_string.substr(trim_after_space ? pos + 1 : 0, trim_after_space ? original_string.length() : pos);
 }
 
 class code_writer
