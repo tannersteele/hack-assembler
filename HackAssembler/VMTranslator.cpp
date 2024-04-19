@@ -54,7 +54,7 @@ public:
 		// M=M-1 (move to the first register we're processing)
 		// A=M (set A register to that register we want to process)
 		// D=M (actually fetch the value inside the register)
-		// M=0 (set the register to 0 since we're 'popping' it)
+		// M=0 (set the register to 0 since we're 'popping' it) - apparently this doesn't happen given the VM translator example
 		// @SP (reset our A register to stack pointer)
 		// A=M-1 (move to 2nd argument in add expression)
 		// M=D+M (add x + y then store result in pre-existing register)
