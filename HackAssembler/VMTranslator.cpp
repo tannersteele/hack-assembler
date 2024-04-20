@@ -1,3 +1,4 @@
+#include <format>
 #include <string>
 #include <vector>
 #include <iostream>
@@ -18,6 +19,13 @@ enum command_type
 	c_call			= 1 << 8
 };
 
+// Always compare a value being parsed + processed against these boundaries
+constexpr int32_t virtual_register_address_space = 0x000;
+constexpr int32_t static_address_space = 0x010;
+constexpr int32_t stack_address_space_start = 0x100;
+constexpr int32_t stack_address_space_end = 0x7FF;
+
+
 class parser
 {
 private:
@@ -32,6 +40,9 @@ public:
 		{
 			"push constant 111", "push constant 333", "push constant 888", "pop static 8", "add"
 		};
+
+		// push constant 111 will first push @ 256
+		// 
 		// Push constant 111 will produce: 
 		// @111
 		// D=A
@@ -59,18 +70,48 @@ public:
 		// A=M-1 (move to 2nd argument in add expression)
 		// M=D+M (add x + y then store result in pre-existing register)
 
+		std::vector<std::string> temp_asm_arr; //just a hack for testing
+
 		for (const auto& command : commands)
 		{
 			std::string cmd = command;
 			current_command_type_ = get_command_type(cmd);
 
-			if (current_command_type_ == c_arithmetic)
-				continue;
+			if (current_command_type_ != c_arithmetic)
+			{
+				std::string first_arg = get_first_arg(cmd);
+				get_second_arg(cmd);
+				std::string second_arg = cmd;
 
-			std::string first_arg = get_first_arg(cmd);
-			get_second_arg(cmd);
-			std::string second_arg = cmd;
+				temp_asm_arr.emplace_back(HACK_get_pop_push_asm(first_arg, std::stoi(second_arg)));  // NOLINT(bugprone-narrowing-conversions)
+			}
+			else
+			{
+				temp_asm_arr.emplace_back(HACK_get_arithmetic_asm(cmd));
+			}
 		}
+
+		for (const auto& temp_asm : temp_asm_arr)
+		{
+			std::cout << temp_asm << '\n';
+		}
+	}
+
+	static std::string HACK_get_arithmetic_asm(const std::string& cmd)
+	{
+		std::string asm_command;
+		if (cmd == "add") asm_command = "M=D+M";
+		if (cmd == "sub") asm_command = "M=D-M"; //TODO: handle more, even if this is a temp hack
+
+		return "@SP\nM=M-1\nA=M\nD=M\nM=0\n@SP\nA=M-1\n" + asm_command;
+	}
+
+	std::string HACK_get_pop_push_asm(const std::string& destination, int32_t value) const
+	{
+		if (current_command_type_ == c_push) // expand to support more destinations with proper offset
+			return std::format("@{}\nD=A\n@SP\nA=M\nM=D\n@SP\nM=M+1", value); //push constant n
+
+		return std::format("M=M-1\nA=M\nD=M\nM=0\n@{}\nM=D", static_address_space + value); // pop static n
 	}
 
 	static bool check_operation_modify_command(std::string& command, const std::string& operation)
