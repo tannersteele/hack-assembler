@@ -38,37 +38,11 @@ public:
 		// Some test commands..
 		const std::vector<std::string> commands =
 		{
-			"push constant 111", "push constant 333", "push constant 888", "pop static 8", "add"
+			"push constant 111", "push constant 333", "push constant 888", "pop static 8", "pop static 3", "pop static 1", "push static 3", "push static 1", "sub", "push static 8", "add"
 		};
-
-		// push constant 111 will first push @ 256
-		// 
-		// Push constant 111 will produce: 
-		// @111
-		// D=A
-		// @SP (starts at 256)
-		// A=M
-		// M=D
-		// @SP
-		// M=M+1
-
-		// RAM[0] => stack pointer (this addr contains mem addr containing topmost stack value)
-		// RAM[16]->RAM[255] => static variables
-		// RAM[256]->RAM[2047] => stack
-		// "Push constant" doesn't fetch a variable from anywhere, just does the address trick
 
 		// pop -> SP-- followed by x = RAM[SP]
 		// add, sub, eq, gt, lt have 2 implicit operands (all supported by alu - will be similar to add operation below except last instruction will change!)
-
-		// Add example, could probably optimize?
-		// @SP (top of stack)
-		// M=M-1 (move to the first register we're processing)
-		// A=M (set A register to that register we want to process)
-		// D=M (actually fetch the value inside the register)
-		// M=0 (set the register to 0 since we're 'popping' it) - apparently this doesn't happen given the VM translator example
-		// @SP (reset our A register to stack pointer)
-		// A=M-1 (move to 2nd argument in add expression)
-		// M=D+M (add x + y then store result in pre-existing register)
 
 		std::vector<std::string> temp_asm_arr; //just a hack for testing
 
@@ -91,6 +65,9 @@ public:
 			}
 		}
 
+		// Maybe put in an infinite loop at the end of execution as a safeguard ?
+
+		// Temp output, will change to file output later!
 		for (const auto& temp_asm : temp_asm_arr)
 		{
 			std::cout << temp_asm << '\n';
@@ -99,19 +76,25 @@ public:
 
 	static std::string HACK_get_arithmetic_asm(const std::string& cmd)
 	{
+		// Technically we don't need to add more M=0 calls after we've moved the stack pointer...
 		std::string asm_command;
 		if (cmd == "add") asm_command = "M=D+M";
-		if (cmd == "sub") asm_command = "M=D-M"; //TODO: handle more, even if this is a temp hack
+		if (cmd == "sub") asm_command = "M=M-D"; //TODO: handle more, even if this is a temp hack
 
-		return "@SP\nM=M-1\nA=M\nD=M\nM=0\n@SP\nA=M-1\n" + asm_command;
+		return "@SP\nM=M-1\nA=M\nD=M\n@SP\nA=M-1\n" + asm_command;
 	}
 
 	std::string HACK_get_pop_push_asm(const std::string& destination, int32_t value) const
 	{
-		if (current_command_type_ == c_push) // expand to support more destinations with proper offset
-			return std::format("@{}\nD=A\n@SP\nA=M\nM=D\n@SP\nM=M+1", value); //push constant n
 
-		return std::format("M=M-1\nA=M\nD=M\nM=0\n@{}\nM=D", static_address_space + value); // pop static n
+		if (current_command_type_ == c_push) // expand to support more destinations with proper offset
+		{
+			if (destination == "constant") return std::format("@{}\nD=A\n@SP\nA=M\nM=D\n@SP\nM=M+1", value); //push constant n
+
+			//push static n => push whatever is stored at "static n" address onto the stack (0x100 + n)
+			if (destination == "static") return std::format("@{}\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1", static_address_space + value);
+		}
+		return std::format("@SP\nM=M-1\n@SP\nA=M\nD=M\n@{}\nM=D", static_address_space + value); // pop static n - previous: @SP\nM=M-1\n@SP\nA=M\nD=M\n***M=0***\n@{}\nM=D" (calling M=0 is unnecessary)
 	}
 
 	static bool check_operation_modify_command(std::string& command, const std::string& operation)
@@ -128,7 +111,7 @@ public:
 	static command_type get_command_type(std::string& command)
 	{
 		if (command == "eq" || command == "lt" || command == "gt" || command == "and" || command == "or" || 
-			command == "not" || command == "add" || command == "neg")
+			command == "not" || command == "add" || command == "sub" || command == "neg")
 			return c_arithmetic;
 
 		if (check_operation_modify_command(command, "push ")) return c_push;
