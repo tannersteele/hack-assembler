@@ -83,7 +83,7 @@ public:
 				get_second_arg(cmd);
 				std::string second_arg = cmd;
 
-				temp_asm_arr.emplace_back(HACK_get_pop_push_asm(first_arg, std::stoi(second_arg)));  // NOLINT(bugprone-narrowing-conversions)
+				temp_asm_arr.emplace_back(HACK_get_pop_push_asm(first_arg, std::stoi(second_arg)));
 			}
 			else
 			{
