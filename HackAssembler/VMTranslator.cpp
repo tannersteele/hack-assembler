@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <unordered_map>
 /*
 	Test stuff - WIP
 */
@@ -36,9 +37,52 @@ public:
 	parser(): current_command_type_()
 	{
 		// Some test commands..
-		const std::vector<std::string> commands =
+		const std::vector<std::string> commands = {
+			"push constant 17",
+			"push constant 17",
+			"eq",
+			"push constant 17",
+			"push constant 16",
+			"eq",
+			"push constant 16",
+			"push constant 17",
+			"eq",
+			"push constant 892",
+			"push constant 891",
+			"lt",
+			"push constant 891",
+			"push constant 892",
+			"lt",
+			"push constant 891",
+			"push constant 891",
+			"lt",
+			"push constant 32767",
+			"push constant 32766",
+			"gt",
+			"push constant 32766",
+			"push constant 32767",
+			"gt",
+			"push constant 32766",
+			"push constant 32766",
+			"gt",
+			"push constant 57",
+			"push constant 31",
+			"push constant 53",
+			"add",
+			"push constant 112",
+			"sub",
+			//"neg",
+			//"and",
+			//"push constant 82",
+			//"or",
+			//"not"
+		};
+
+		std::unordered_map<std::string, std::string> equality_to_asm_command =
 		{
-			"push constant 111", "push constant 333", "push constant 888", "pop static 8", "pop static 3", "pop static 1", "push static 3", "push static 1", "sub", "push static 8", "add"
+			{"eq", "D;JEQ"},
+			{"gt", "D;JGT"},
+			{"lt", "D;JLT"}
 		};
 
 		// pop -> SP-- followed by x = RAM[SP]
@@ -46,6 +90,7 @@ public:
 
 		std::vector<std::string> temp_asm_arr; //just a hack for testing
 
+		uint32_t arithmetic_operation_counter = 0;
 		for (const auto& command : commands)
 		{
 			std::string cmd = command;
@@ -61,7 +106,7 @@ public:
 			}
 			else
 			{
-				temp_asm_arr.emplace_back(HACK_get_arithmetic_asm(cmd));
+				temp_asm_arr.emplace_back(HACK_get_arithmetic_asm(cmd, arithmetic_operation_counter++, equality_to_asm_command));
 			}
 		}
 
@@ -74,12 +119,35 @@ public:
 		}
 	}
 
-	static std::string HACK_get_arithmetic_asm(const std::string& cmd)
+	static std::string HACK_get_arithmetic_asm(const std::string& cmd, const uint32_t count, const std::unordered_map<std::string, std::string>& eq_to_asm)
 	{
 		// Technically we don't need to add more M=0 calls after we've moved the stack pointer...
 		std::string asm_command;
 		if (cmd == "add") asm_command = "M=D+M";
-		if (cmd == "sub") asm_command = "M=M-D"; //TODO: handle more, even if this is a temp hack
+		if (cmd == "sub") asm_command = "M=M-D";
+
+		// Can definitely be optimized with better fallthrough logic!
+		if (eq_to_asm.contains(cmd))
+		{
+			asm_command =
+				std::format(
+					"D=M-D\n"
+					"@SETNEG1_{}\n"
+					"{}\n"
+					"@SET0_{}\n"
+					"0;JMP\n"
+					"(SET0_{})\n"
+					"@SP\n"
+					"A=M-1\n"
+					"M=0\n"
+					"@END_ARITH_{}\n"
+					"0;JMP\n"
+					"(SETNEG1_{})\n"
+					"@SP\n"
+					"A=M-1\n"
+					"M=-1\n"
+					"(END_ARITH_{})\n", count, eq_to_asm.at(cmd), count, count, count, count, count);
+		}
 
 		return "@SP\nM=M-1\nA=M\nD=M\n@SP\nA=M-1\n" + asm_command;
 	}
@@ -90,9 +158,7 @@ public:
 		if (current_command_type_ == c_push) // expand to support more destinations with proper offset
 		{
 			if (destination == "constant") return std::format("@{}\nD=A\n@SP\nA=M\nM=D\n@SP\nM=M+1", value); //push constant n
-
-			//push static n => push whatever is stored at "static n" address onto the stack (0x100 + n)
-			if (destination == "static") return std::format("@{}\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1", static_address_space + value);
+			if (destination == "static") return std::format("@{}\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1", static_address_space + value); //push static n => push whatever is stored at "static n" address onto the stack (0x100 + n)
 		}
 		return std::format("@SP\nM=M-1\n@SP\nA=M\nD=M\n@{}\nM=D", static_address_space + value); // pop static n - previous: @SP\nM=M-1\n@SP\nA=M\nD=M\n***M=0***\n@{}\nM=D" (calling M=0 is unnecessary)
 	}
