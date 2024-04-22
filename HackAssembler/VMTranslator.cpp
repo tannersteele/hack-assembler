@@ -71,11 +71,11 @@ public:
 			"add",
 			"push constant 112",
 			"sub",
-			//"neg",
-			//"and",
-			//"push constant 82",
-			//"or",
-			//"not"
+			"neg",
+			"and",
+			"push constant 82",
+			"or",
+			"not"
 		};
 
 		std::unordered_map<std::string, std::string> equality_to_asm_command =
@@ -125,6 +125,10 @@ public:
 		std::string asm_command;
 		if (cmd == "add") asm_command = "M=D+M";
 		if (cmd == "sub") asm_command = "M=M-D";
+		if (cmd == "and") asm_command = "M=M&D";
+		if (cmd == "neg") asm_command = "M=-M"; //move back 1, perform operation, move back
+		if (cmd == "not") asm_command = "M=!M";
+		if (cmd == "or")  asm_command = "M=M|D";
 
 		// Can definitely be optimized with better fallthrough logic!
 		if (eq_to_asm.contains(cmd))
@@ -132,7 +136,7 @@ public:
 			asm_command =
 				std::format(
 					"D=M-D\n"
-					"@SETNEG1_{}\n"
+					"@SET_NEG1_{}\n"
 					"{}\n"
 					"@SET0_{}\n"
 					"0;JMP\n"
@@ -140,15 +144,18 @@ public:
 					"@SP\n"
 					"A=M-1\n"
 					"M=0\n"
-					"@END_ARITH_{}\n"
+					"@END_ARITHMETIC_{}\n"
 					"0;JMP\n"
-					"(SETNEG1_{})\n"
+					"(SET_NEG1_{})\n"
 					"@SP\n"
 					"A=M-1\n"
 					"M=-1\n"
-					"(END_ARITH_{})\n", count, eq_to_asm.at(cmd), count, count, count, count, count);
+					"(END_ARITHMETIC_{})", count, eq_to_asm.at(cmd), count, count, count, count, count);
 		}
 
+		if (cmd == "not" || cmd == "neg")
+			return std::format("@SP\nM=M-1\nA=M\nD=M\n{}\n@SP\nM=M+1", asm_command); //revisit...
+			
 		return "@SP\nM=M-1\nA=M\nD=M\n@SP\nA=M-1\n" + asm_command;
 	}
 
