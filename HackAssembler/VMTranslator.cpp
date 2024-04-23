@@ -38,44 +38,21 @@ public:
 	{
 		// Some test commands..
 		const std::vector<std::string> commands = {
-			"push constant 17",
-			"push constant 17",
-			"eq",
-			"push constant 17",
-			"push constant 16",
-			"eq",
-			"push constant 16",
-			"push constant 17",
-			"eq",
-			"push constant 892",
-			"push constant 891",
-			"lt",
-			"push constant 891",
-			"push constant 892",
-			"lt",
-			"push constant 891",
-			"push constant 891",
-			"lt",
-			"push constant 32767",
-			"push constant 32766",
-			"gt",
-			"push constant 32766",
-			"push constant 32767",
-			"gt",
-			"push constant 32766",
-			"push constant 32766",
-			"gt",
-			"push constant 57",
-			"push constant 31",
-			"push constant 53",
-			"add",
-			"push constant 112",
-			"sub",
-			"neg",
-			"and",
-			"push constant 82",
-			"or",
-			"not"
+	"push constant 3030",
+	"pop pointer 0",
+	"push constant 3040",
+	"pop pointer 1",
+	"push constant 32",
+	"pop this 2",
+	"push constant 46",
+	"pop that 6",
+	"push pointer 0",
+	"push pointer 1",
+	"add",
+	"push this 2",
+	"sub",
+	"push that 6",
+	"add"
 		};
 
 		std::unordered_map<std::string, std::string> equality_to_asm_command =
@@ -164,9 +141,22 @@ public:
 
 		if (current_command_type_ == c_push) // expand to support more destinations with proper offset
 		{
+			// Remove all this duped crap
 			if (destination == "constant") return std::format("@{}\nD=A\n@SP\nA=M\nM=D\n@SP\nM=M+1", value); //push constant n
-			if (destination == "static") return std::format("@{}\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1", static_address_space + value); //push static n => push whatever is stored at "static n" address onto the stack (0x100 + n)
+			if (destination == "static")   return std::format("@{}\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1", static_address_space + value); //push static n => push whatever is stored at "static n" address onto the stack (0x100 + n)
+			if (destination == "local")    return std::format("@{}\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1", 0x001 + value);
+			if (destination == "argument") return std::format("@{}\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1", 0x002 + value);
+			if (destination == "this")     return std::format("@{}\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1", 0x003 + value);
+			if (destination == "that")     return std::format("@{}\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1", 0x004 + value);
+			if (destination == "temp")     return std::format("@{}\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1", 0x005 + value);
+
+			if (destination == "pointer")  return std::format("@{}\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1", 0x003 + value);
 		}
+		if (destination == "this")    return std::format("@{}\nD=A\n@{}\nD=D+M\n@R13\nM=D\n@SP\nM=M-1\nA=M\nD=M\n@R13\nA=M\nM=D", value, 0x003);
+		if (destination == "that")    return std::format("@{}\nD=A\n@{}\nD=D+M\n@R13\nM=D\n@SP\nM=M-1\nA=M\nD=M\n@R13\nA=M\nM=D", value, 0x004);
+		// pop this 2 => 3032 (if 3030 is stored @ RAM[3])
+		// pop that 6 => 3046 (if 3040 is stored @ RAM[4])
+		if (destination == "pointer") return std::format("@SP\nM=M-1\n@SP\nA=M\nD=M\n@{}\nM=D", 0x003 + value);
 		return std::format("@SP\nM=M-1\n@SP\nA=M\nD=M\n@{}\nM=D", static_address_space + value); // pop static n - previous: @SP\nM=M-1\n@SP\nA=M\nD=M\n***M=0***\n@{}\nM=D" (calling M=0 is unnecessary)
 	}
 
