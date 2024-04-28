@@ -39,7 +39,7 @@ public:
 		// Some test commands..
 		const std::vector<std::string> commands = {};
 
-		std::unordered_map<std::string, std::string> equality_to_asm_command =
+		std::unordered_map<std::string, std::string> comparison_to_asm_command =
 		{
 			{"eq", "D;JEQ"},
 			{"gt", "D;JGT"},
@@ -67,7 +67,7 @@ public:
 			}
 			else
 			{
-				temp_asm_arr.emplace_back(HACK_get_arithmetic_asm(cmd, arithmetic_operation_counter++, equality_to_asm_command));
+				temp_asm_arr.emplace_back(HACK_get_arithmetic_asm(cmd, arithmetic_operation_counter++, comparison_to_asm_command));
 			}
 		}
 
@@ -80,7 +80,7 @@ public:
 		}
 	}
 
-	static std::string HACK_get_arithmetic_asm(const std::string& cmd, const uint32_t count, const std::unordered_map<std::string, std::string>& eq_to_asm)
+	static std::string HACK_get_arithmetic_asm(const std::string& cmd, const uint32_t count, const std::unordered_map<std::string, std::string>& comp_to_asm)
 	{
 		// Technically we don't need to add more M=0 calls after we've moved the stack pointer...
 		std::string asm_command;
@@ -92,7 +92,7 @@ public:
 		if (cmd == "or")  asm_command = "M=M|D";
 
 		// Can definitely be optimized with better fallthrough logic!
-		if (eq_to_asm.contains(cmd))
+		if (comp_to_asm.contains(cmd))
 		{
 			asm_command =
 				std::format(
@@ -111,7 +111,7 @@ public:
 					"@SP\n"
 					"A=M-1\n"
 					"M=-1\n"
-					"(END_ARITHMETIC_{})", count, eq_to_asm.at(cmd), count, count, count, count, count);
+					"(END_ARITHMETIC_{})", count, comp_to_asm.at(cmd), count, count, count, count, count);
 		}
 
 		if (cmd == "not" || cmd == "neg")
