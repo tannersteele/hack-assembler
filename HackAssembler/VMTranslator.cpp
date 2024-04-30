@@ -88,6 +88,11 @@ public:
 		return std::format("@{}\nD=M\n@{}\nD=D+A\nA=D\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1", mem_address, value);
 	}
 
+	constexpr static std::string fetch_pop_indirection_command(uint32_t mem_address, int32_t value)
+	{
+		return std::format("@{}\nD=A\n@{}\nD=D+M\n@R13\nM=D\n@SP\nM=M-1\nA=M\nD=M\n@R13\nA=M\nM=D", mem_address, value);
+	}
+
 	static std::string HACK_get_arithmetic_asm(const std::string& cmd, const uint32_t count, const std::unordered_map<std::string, std::string>& comp_to_asm)
 	{
 		// Technically we don't need to add more M=0 calls after we've moved the stack pointer...
@@ -143,11 +148,10 @@ public:
 			if (destination == "temp")     return std::format("@{}\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1", 0x005 + value);
 		}
 
-		// Pop commands
-		if (destination == "local")    return std::format("@{}\nD=A\n@{}\nD=D+M\n@R13\nM=D\n@SP\nM=M-1\nA=M\nD=M\n@R13\nA=M\nM=D", value, 0x001);
-		if (destination == "argument") return std::format("@{}\nD=A\n@{}\nD=D+M\n@R13\nM=D\n@SP\nM=M-1\nA=M\nD=M\n@R13\nA=M\nM=D", value, 0x002);
-		if (destination == "this")     return std::format("@{}\nD=A\n@{}\nD=D+M\n@R13\nM=D\n@SP\nM=M-1\nA=M\nD=M\n@R13\nA=M\nM=D", value, 0x003); // requires indirect access
-		if (destination == "that")     return std::format("@{}\nD=A\n@{}\nD=D+M\n@R13\nM=D\n@SP\nM=M-1\nA=M\nD=M\n@R13\nA=M\nM=D", value, 0x004); // requires indirect access
+		// pop commands
+		if (destination == "local" || destination == "argument" || destination == "this" || destination == "that")
+			return fetch_pop_indirection_command(dest_to_mem_addr.at(destination), value);
+
 		if (destination == "pointer")  return std::format("@SP\nM=M-1\n@SP\nA=M\nD=M\n@{}\nM=D", 0x003 + value);
 		if (destination == "temp")     return std::format("@SP\nM=M-1\n@SP\nA=M\nD=M\n@{}\nM=D", 0x005 + value);
 
