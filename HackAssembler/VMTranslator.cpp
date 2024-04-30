@@ -130,7 +130,6 @@ public:
 
 	std::string HACK_get_pop_push_asm(const std::string& destination, int32_t value, const std::unordered_map<std::string, uint32_t>& dest_to_mem_addr) const
 	{
-
 		if (current_command_type_ == c_push) // expand to support more destinations with proper offset
 		{
 			// Remove all this duped crap
@@ -144,6 +143,7 @@ public:
 			if (destination == "temp")     return std::format("@{}\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1", 0x005 + value);
 		}
 
+		// Pop commands
 		if (destination == "local")    return std::format("@{}\nD=A\n@{}\nD=D+M\n@R13\nM=D\n@SP\nM=M-1\nA=M\nD=M\n@R13\nA=M\nM=D", value, 0x001);
 		if (destination == "argument") return std::format("@{}\nD=A\n@{}\nD=D+M\n@R13\nM=D\n@SP\nM=M-1\nA=M\nD=M\n@R13\nA=M\nM=D", value, 0x002);
 		if (destination == "this")     return std::format("@{}\nD=A\n@{}\nD=D+M\n@R13\nM=D\n@SP\nM=M-1\nA=M\nD=M\n@R13\nA=M\nM=D", value, 0x003); // requires indirect access
