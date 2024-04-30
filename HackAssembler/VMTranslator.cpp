@@ -39,15 +39,20 @@ public:
 		// Some test commands..
 		const std::vector<std::string> commands = {};
 
-		std::unordered_map<std::string, std::string> comparison_to_asm_command =
+		const std::unordered_map<std::string, std::string> comparison_to_asm_command =
 		{
 			{"eq", "D;JEQ"},
 			{"gt", "D;JGT"},
 			{"lt", "D;JLT"}
 		};
 
-		// pop -> SP-- followed by x = RAM[SP]
-		// add, sub, eq, gt, lt have 2 implicit operands (all supported by alu - will be similar to add operation below except last instruction will change!)
+		const std::unordered_map<std::string, uint32_t> destination_to_mem_address =
+		{
+			{"local",    0x001},
+			{"argument", 0x002},
+			{"this",     0x003},
+			{"that",     0x004}
+		};
 
 		std::vector<std::string> temp_asm_arr; //just a hack for testing
 
@@ -63,7 +68,7 @@ public:
 				get_second_arg(cmd);
 				std::string second_arg = cmd;
 
-				temp_asm_arr.emplace_back(HACK_get_pop_push_asm(first_arg, std::stoi(second_arg)));
+				temp_asm_arr.emplace_back(HACK_get_pop_push_asm(first_arg, std::stoi(second_arg), destination_to_mem_address));
 			}
 			else
 			{
@@ -75,9 +80,12 @@ public:
 
 		// Temp output, will change to file output later!
 		for (const auto& temp_asm : temp_asm_arr)
-		{
 			std::cout << temp_asm << '\n';
-		}
+	}
+
+	constexpr static std::string fetch_push_indirection_command(uint32_t mem_address, int32_t value)
+	{
+		return std::format("@{}\nD=M\n@{}\nD=D+A\nA=D\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1", mem_address, value);
 	}
 
 	static std::string HACK_get_arithmetic_asm(const std::string& cmd, const uint32_t count, const std::unordered_map<std::string, std::string>& comp_to_asm)
@@ -120,7 +128,7 @@ public:
 		return "@SP\nM=M-1\nA=M\nD=M\n@SP\nA=M-1\n" + asm_command;
 	}
 
-	std::string HACK_get_pop_push_asm(const std::string& destination, int32_t value) const
+	std::string HACK_get_pop_push_asm(const std::string& destination, int32_t value, const std::unordered_map<std::string, uint32_t>& dest_to_mem_addr) const
 	{
 
 		if (current_command_type_ == c_push) // expand to support more destinations with proper offset
@@ -128,10 +136,9 @@ public:
 			// Remove all this duped crap
 			if (destination == "constant") return std::format("@{}\nD=A\n@SP\nA=M\nM=D\n@SP\nM=M+1", value); //push constant n
 			if (destination == "static")   return std::format("@{}\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1", static_address_space + value); //push static n => push whatever is stored at "static n" address onto the stack (0x100 + n)
-			if (destination == "local")    return std::format("@{}\nD=M\n@{}\nD=D+A\nA=D\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1", 0x001, value);
-			if (destination == "argument") return std::format("@{}\nD=M\n@{}\nD=D+A\nA=D\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1", 0x002, value);
-			if (destination == "this")     return std::format("@{}\nD=M\n@{}\nD=D+A\nA=D\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1", 0x003, value); //requires indirect access
-			if (destination == "that")     return std::format("@{}\nD=M\n@{}\nD=D+A\nA=D\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1", 0x004, value); //requires indirect access
+
+			if (destination == "local" || destination == "argument" || destination == "this" || destination == "that") // use some enum/state var to repr these instead
+				return fetch_push_indirection_command(dest_to_mem_addr.at(destination), value);
 
 			if (destination == "pointer")  return std::format("@{}\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1", 0x003 + value);
 			if (destination == "temp")     return std::format("@{}\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1", 0x005 + value);
