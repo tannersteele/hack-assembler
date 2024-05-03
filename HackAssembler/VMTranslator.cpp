@@ -39,6 +39,8 @@ public:
 		// Some test commands..
 		const std::vector<std::string> commands = {};
 
+
+		// Shove all these in a utility file somewhere
 		const std::unordered_map<std::string, std::string> comparison_to_asm_command =
 		{
 			{"eq", "D;JEQ"},
@@ -53,6 +55,17 @@ public:
 			{"this",     0x003},
 			{"that",     0x004}
 		};
+
+		const std::unordered_map<std::string, std::string> arithmetic_op_to_asm =
+		{
+			{"add", "M=M+D"},
+			{"sub", "M=M-D"},
+			{"and", "M=M&D"},
+			{"neg", "M=-M"},
+			{"not", "M=!M"},
+			{"or",  "M=M|D"}
+		};
+		//END
 
 		std::vector<std::string> temp_asm_arr; //just a hack for testing
 
@@ -72,7 +85,7 @@ public:
 			}
 			else
 			{
-				temp_asm_arr.emplace_back(HACK_get_arithmetic_asm(cmd, arithmetic_operation_counter++, comparison_to_asm_command));
+				temp_asm_arr.emplace_back(HACK_get_arithmetic_asm(cmd, arithmetic_operation_counter++, comparison_to_asm_command, arithmetic_op_to_asm));
 			}
 		}
 
@@ -93,16 +106,14 @@ public:
 		return std::format("@{}\nD=A\n@{}\nD=D+M\n@R13\nM=D\n@SP\nM=M-1\nA=M\nD=M\n@R13\nA=M\nM=D", mem_address, value);
 	}
 
-	static std::string HACK_get_arithmetic_asm(const std::string& cmd, const uint32_t count, const std::unordered_map<std::string, std::string>& comp_to_asm)
+	static std::string HACK_get_arithmetic_asm(
+		const std::string& cmd, 
+		const uint32_t count, 
+		const std::unordered_map<std::string, std::string>& comp_to_asm,
+		const std::unordered_map<std::string, std::string>& arithmetic_op_to_asm)
 	{
 		// Technically we don't need to add more M=0 calls after we've moved the stack pointer...
-		std::string asm_command;
-		if (cmd == "add") asm_command = "M=D+M";
-		if (cmd == "sub") asm_command = "M=M-D";
-		if (cmd == "and") asm_command = "M=M&D";
-		if (cmd == "neg") asm_command = "M=-M"; //move back 1, perform operation, move back
-		if (cmd == "not") asm_command = "M=!M";
-		if (cmd == "or")  asm_command = "M=M|D";
+		std::string asm_command = arithmetic_op_to_asm.at(cmd);
 
 		// Can definitely be optimized with better fallthrough logic!
 		if (comp_to_asm.contains(cmd))
@@ -127,8 +138,8 @@ public:
 					"(END_ARITHMETIC_{})", count, comp_to_asm.at(cmd), count, count, count, count, count);
 		}
 
-		if (cmd == "not" || cmd == "neg")
-			return std::format("@SP\nM=M-1\nA=M\nD=M\n{}\n@SP\nM=M+1", asm_command); //revisit...
+		if (cmd == "not" || cmd == "neg") //unary operation, only move the stack pointer back once
+			return std::format("@SP\nM=M-1\nA=M\nD=M\n{}\n@SP\nM=M+1", asm_command);
 			
 		return "@SP\nM=M-1\nA=M\nD=M\n@SP\nA=M-1\n" + asm_command;
 	}
